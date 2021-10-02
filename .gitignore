@@ -1,2 +1,10 @@
-build
-bin/*
+# Compiled object files
+*.o
+*.obj
+
+# Excecutables
+*.out
+
+# Builds
+build/
+bin/
