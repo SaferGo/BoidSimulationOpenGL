@@ -5,15 +5,15 @@
 - CMake
 - SDL2
 
-### How to build
+## How to build
 
-- `git clone https://github.com/hugoam/toy --recursive`
+- `git clone https://github.com/SaferGo/boid-simulation-opengl.git`
 - `cd boid-simulation-opengl`
 - `mkdir build`
 - `cd build`
 - `cmake ..`
 - `make`
-- `./../bin/BoidSimulation`
+- To run it: `./../bin/BoidSimulation`
 
 ## Todo
 
