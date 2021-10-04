@@ -3,6 +3,7 @@
 ## Dependencies
 
 - CMake
+- OpenGL
 - SDL2
 
 ## How to build
