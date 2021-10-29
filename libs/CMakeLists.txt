@@ -38,7 +38,7 @@ target_include_directories(imgui PUBLIC
    "${SDL2_INCLUDE_DIRS}")
 ## Configure ImGui to use OpenGL through SLD2
 target_compile_definitions(imgui PUBLIC
-   IMGUI_IMPL_OPENGL_LOADER_CUSTOM=<glad/glad.h>)
+   IMGUI_IMPL_OPENGL_LOADER_CUSTOM=<SDL_opengl.h>)
 
 # Executable
 add_executable(${PROJECT_NAME} "${CMAKE_SOURCE_DIR}/src/main.cpp")

@@ -1,6 +1,9 @@
-#include <glad/glad.h>
 #include <SDL2/SDL.h>
-
+#include <glad/glad.h>
+#include <imgui/imgui.h>
+#include <imgui/imgui_impl_sdl.h>
+#include <imgui/imgui_impl_opengl3.h>
+#
 #include <iostream>
 #include <exception>
 #include <string.h>
@@ -82,7 +85,8 @@ int main()
          std::cout << "Input Detected!\n";
          */
 
-      glClearColor(1, 0, 0, 1);
+      glClearColor(0.4, 0.1, 0.2, 1);
+      glClear(GL_COLOR_BUFFER_BIT);
 
       // Updates a window with OpenGL rendering
       SDL_GL_SwapWindow(window);
