@@ -2,6 +2,9 @@
 #include <exception>
 #include <string.h>
 #include <vector>
+#include <random>
+#include <ctime>
+#include <cmath>
 
 #include <imgui.h>
 #include <imgui_impl_sdl.h>
@@ -14,14 +17,38 @@
 //#include <boidSimulation/ResourceManager.h>
 #include <boidSimulation/glShaderLoader.h>
 
+std::mt19937 gen(time(0));
+const int MAX_N_BOIDS = 10;
+int boidsIn = 0;
+GLuint buffer, VAO;
+
+struct Pos
+{
+   float x, y;
+
+   Pos() {}
+   Pos(const float newX, const float newY) : x(newX), y(newY) {}
+   Pos(const Pos& newPos) : x(newPos.x), y(newPos.y) {}
+};
+
+struct CurrentPathInfo
+{
+   Pos start, end, curve;
+   float t;
+
+   CurrentPathInfo(const Pos newStart, const Pos newEnd, const Pos newCurve)
+      : start(newStart), end(newEnd), curve(newCurve), t(0.0) {}
+};
+
 class Bird
 {
-
 public:
    float pos[9];
+   Pos center;
 
    Bird(float x, float y)
-   : pos{ -0.4f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.5f, 0.0f}
+   : pos{ x - 0.02f, y, 0.0f, x + 0.02f, y, 0.0f, x, y + 0.1f, 0.0f},
+     center(x, y)
    {}
       //x - 0.01f, y, 0.0f,
       //x + 0.01f, y, 0.0f,
@@ -33,10 +60,14 @@ public:
    }
 
    ~Bird() = default;
+
 private:
 };
 
 std::vector<Bird> allBirds;
+std::vector<bool> isFlying;
+std::vector<Pos> actualTarget;
+std::vector<CurrentPathInfo> currentPath;
 
 void initGLAD()
 {
@@ -72,45 +103,152 @@ void createGUI()
    ImGui::End();
 }
 
-void generateNewBird(float x, float y, GLuint VAO)
+void generateNewBird(float x, float y)
 {
-   std::cout << x << " " << y << std::endl;
-   Bird newBird(x,y);
+   if (boidsIn > MAX_N_BOIDS)
+      return;
+
+   Bird newBird(x, y);
    allBirds.push_back(newBird);
+   isFlying.push_back(false);
+   actualTarget.push_back(Pos(x, y));
+   currentPath.push_back(CurrentPathInfo(Pos(x, y), Pos(x, y), Pos(x, y)));
 
-   GLuint VBO;
-   glGenBuffers(1, &VBO);
-   
    glBindVertexArray(VAO);
+
+   const unsigned int vertexOffset = 9 * boidsIn * sizeof(float); 
+   glBindBuffer(GL_ARRAY_BUFFER, buffer);
+   glBufferSubData(
+         GL_ARRAY_BUFFER, vertexOffset, sizeof(newBird.pos), newBird.pos
+   );
+
+   glBindBuffer(GL_ARRAY_BUFFER, 0);
+   glBindVertexArray(0);
    
-   glBindBuffer(GL_ARRAY_BUFFER, VBO);
-   glBufferData(
-         GL_ARRAY_BUFFER, 
-         newBird.getSizeOfPosArray(),
-         newBird.pos,
-         GL_STATIC_DRAW
+   boidsIn++;
+}
+
+Pos calculateCurvePoint(CurrentPathInfo cp)
+{
+   // float distX = abs(cp.start.x - cp.end.x) / 2.0;
+   // return Pos(distX + cp.start.x, cp.end.y);
+   std::uniform_int_distribution<> distrX(-680, 680);
+   std::uniform_int_distribution<> distrY(-480, 480);
+
+   return Pos(distrX(gen) / 680.0, distrY(gen) / 480.0);
+}
+
+void generateNewTarget(int bird)
+{
+   std::uniform_int_distribution<> distrX(-680, 680);
+   std::uniform_int_distribution<> distrY(-480, 480);
+
+   isFlying[bird] = true;
+   actualTarget[bird].x = distrX(gen) / 680.0;
+   actualTarget[bird].y = distrY(gen) / 480.0;
+   currentPath[bird].start = allBirds[bird].center;
+   currentPath[bird].end = actualTarget[bird];
+   currentPath[bird].curve = calculateCurvePoint(currentPath[bird]);
+   currentPath[bird].t = 0.0;
+}
+
+void updateVerticesBird(const int bird)
+{
+   Pos centerBird = allBirds[bird].center;
+   allBirds[bird] = Bird(centerBird.x, centerBird.y);
+}
+
+void updateBuffer(const int bird)
+{
+   const int vertexOffset = 9 * bird * sizeof(float);
+
+   glBindVertexArray(VAO);
+
+   glBindBuffer(GL_ARRAY_BUFFER, buffer);
+   glBufferSubData(
+         GL_ARRAY_BUFFER,
+         vertexOffset,
+         sizeof(allBirds[bird].pos),
+         allBirds[bird].pos
    );
+   
+   glBindBuffer(GL_ARRAY_BUFFER, 0);
+   glBindVertexArray(0);
+}
 
-   glVertexAttribPointer(
-         0, 3, 
-         GL_FLOAT, 
-         GL_FALSE,
-         3 * sizeof(float), (void*)0
-   );
-   glEnableVertexAttribArray(0);
+Pos quadraticBezier(CurrentPathInfo cp)
+{
+   Pos newPos;
 
-   //glBindBuffer(GL_ARRAY_BUFFER, 0);
-   //glBindVertexArray(0);
+   newPos.x = std::pow(1 - cp.t, 2) * cp.start.x +
+      (1 - cp.t) * 2 * cp.t * cp.curve.x + cp.t * cp.t * cp.end.x;
+   newPos.y = std::pow(1 - cp.t, 2) * cp.start.y +
+      (1 - cp.t) * 2 * cp.t * cp.curve.y + cp.t * cp.t * cp.end.y;
 
+   return newPos;
+}
+
+void moveToTarget(int boid)
+{
+   
+   // Method #1
+   //const float speed = 0.001;
+   //const float step = 0.001;
+
+   //float directionX = (actualTarget[boid].x > allBirds[boid].center.x)? 1.0 : -1.0;
+   //float directionY = (actualTarget[boid].y > allBirds[boid].center.y)? 1.0 : -1.0;
+
+   //if (abs(allBirds[boid].center.x - actualTarget[boid].x) > 0.001)
+   //   allBirds[boid].center.x += step * directionX * speed;
+   //if (abs(allBirds[boid].center.y - actualTarget[boid].y) > 0.001)
+   //   allBirds[boid].center.y += step * directionY * speed;
+
+   // Method #2
+   // ....
+
+   // Method #3
+   const float step = 0.05;
+   Pos newPos = quadraticBezier(currentPath[boid]);
+   currentPath[boid].t += step * 0.001;
+
+   allBirds[boid].center = newPos;
+
+
+   updateVerticesBird(boid);
+}
+
+void randomFly()
+{
+   for (int i = 0; i < boidsIn; i++) {
+
+      if (isFlying[i] == false) {
+         generateNewTarget(i);
+         isFlying[i] = true;
+
+      } else {
+         moveToTarget(i);
+         updateBuffer(i);
+         
+         // Method 1
+         //if (abs(allBirds[i].center.x - actualTarget[i].x) < 0.001 &&
+         //    abs(allBirds[i].center.y - actualTarget[i].y) < 0.001) {
+         //      isFlying[i] = false;
+         //}
+         if (abs(currentPath[i].t - 1.0) < 0.0001)
+            isFlying[i] = false;
+      }
+   }
 }
 
 void update()
 {
    createGUI();
 
+
+   randomFly();
 }
 
-void render(GLuint& shaderProgram, GLuint& VAO)
+void render(GLuint& shaderProgram)
 {
    // Render frame logic
    glClearColor(0.4, 0.1, 0.2, 1);
@@ -123,11 +261,13 @@ void render(GLuint& shaderProgram, GLuint& VAO)
    // Render stuff
    glUseProgram(shaderProgram);
    glBindVertexArray(VAO);
-   glDrawArrays(GL_TRIANGLES, 0, 3);
+   glDrawArrays(GL_TRIANGLES, 0, 3 * boidsIn);
+
+   glBindVertexArray(VAO);
 }
 
 // We load all the resources of the app
-bool load(GLuint& shaderProgram, GLuint& VAO)
+bool load(GLuint& shaderProgram)
 {
    try {
       shaderProgram =
@@ -141,44 +281,22 @@ bool load(GLuint& shaderProgram, GLuint& VAO)
       return false;
    }
 
-   float birdPos[] = {
-      -0.5f, -0.5f, 0.0f,
-      0.5f, -0.5f, 0.0f,
-      0.0f,  0.5f, 0.0f
-   };
-
-   // To send this data to the GPU
-   // first we'll create a VBO 
-   // to set a memory buffer in the GPU
-   // **Remember that to send data from
-   // the CPU to the GPU is very slow, so
-   // is better to send as much data as
-   // possible at once.
-
-   unsigned int VBO;
    glGenVertexArrays(1, &VAO);
-   glGenBuffers(1, &VBO);
-
    glBindVertexArray(VAO);
-   glBindBuffer(GL_ARRAY_BUFFER, VBO);
-   glBufferData(GL_ARRAY_BUFFER, sizeof(birdPos), birdPos, GL_STATIC_DRAW);
-   
-   // Now we need to specify of how OpenGl has to
-   // interpret the vertex data that we sent to the GPU.
-   // 1) Vertex attribute location(e.h layout (location = 0) in v.s).
-   // 2) Size of each vertex(if it's a 3d vertex -> 3 coord.).
-   // 3) Data Type.
-   // 4) If we want to normalize.
-   // 5)Stride -> space between consecutive vertex attributes.
-   // 6) Position where data begins in the buffer.
-   //
-   // Also with this we link the vertex data(from the VBO) with
-   // the vertex shader's vertex attributes.
-   // ### A vertex attribute is an input variable to a shader (vertex shader).
-   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-   glEnableVertexAttribArray(0);
+   // Create big buffer for all the boids
 
-   //Now we can unbind(this is to leave it free for the next bind)
+   size_t vertexBufferSize = 9 * sizeof(float) * MAX_N_BOIDS;
+
+   glGenBuffers(1, &buffer);
+   glBindBuffer(GL_ARRAY_BUFFER, buffer);
+   // We allocate the buffer with determined size but with 0 elements.
+   glBufferData(GL_ARRAY_BUFFER, vertexBufferSize, NULL, GL_DYNAMIC_DRAW);
+   
+   glEnableVertexAttribArray(0);
+   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+
+
+
    glBindBuffer(GL_ARRAY_BUFFER, 0);
    glBindVertexArray(0);
 
@@ -205,8 +323,8 @@ int main()
    }
 
    // Here we'll load all the resources of our app
-   GLuint shaderProgram, VAO;
-   if (load(shaderProgram, VAO) == false)
+   GLuint shaderProgram;
+   if (load(shaderProgram) == false)
       return -1;
 
    bool appRunning = true;
@@ -215,6 +333,14 @@ int main()
 
       // Get the input
       SDL_Event event;
+      // If we use SDL_PollEvent
+      // is when we have a game
+      // full of animation, we need 
+      // precision in our input.
+      // And we use WaitEvent when
+      // the rendering of the game
+      // depends of the next
+      // input(like a chess game).
       while (SDL_PollEvent(&event)) {
          ImGui_ImplSDL2_ProcessEvent(&event);
 
@@ -227,7 +353,11 @@ int main()
          }
          int x, y;
          if (event.type == SDL_MOUSEBUTTONDOWN && SDL_GetMouseState(&x, &y) == SDL_BUTTON(1)) {
-            generateNewBird(x / 680.0f, y / 480.0f, VAO);
+            float nx = (x / 680.0f) - 0.5f;
+            float ny = (y / 480.0f) - 1.0f;
+            ny *= -1;
+            ny -= 1.0f;
+            generateNewBird(nx, ny);
          }
                   
       }
@@ -243,7 +373,7 @@ int main()
 
       update();
 
-      render(shaderProgram, VAO);
+      render(shaderProgram);
       
       window->swapBuffers();
    }
