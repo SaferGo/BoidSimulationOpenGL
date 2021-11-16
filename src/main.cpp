@@ -162,25 +162,30 @@ void updateBuffer(const int bird)
 
 void randomFly()
 {
+   bool rotate = false;
+   
+   currentTime = SDL_GetPerformanceCounter();
+   deltaTime = (double) (
+         (currentTime - startTime) /
+         (double) SDL_GetPerformanceFrequency()
+   );
+
+   // The birds rotate after a period of time
+   std::cout << "DELTA: " << deltaTime << std::endl;
+   if (deltaTime > 0.03)
+      rotate = true;
+
+
    for (int i = 0; i < boidsIn; i++) {
 
       const float step = 0.01;
       const float speed = 0.008;
       double newDirection;
 
-      // The birds rotate after a period of time
-      bool rotate = false;
-      currentTime = SDL_GetPerformanceCounter();
-      deltaTime = (double) (
-         (currentTime - startTime) /
-         (double) SDL_GetPerformanceFrequency()
-      );
-
-      std::cout << "DELTA: " << deltaTime << std::endl;
-      if (deltaTime > 0.001) {
-         rotate = true;
-
-         std::uniform_int_distribution<> randAngle(-7, 7);
+      
+      if (rotate) {
+         std::uniform_int_distribution<> randAngle(-4, 4);
+         //std::uniform_int_distribution<> randAngle(-7, 7);
 
          // Since the triangles are already 90 degrees rotated,
          // we need to add it to the translation
@@ -191,9 +196,6 @@ void randomFly()
          );
 
          newDirection = std::fmod(newDirection, PI * 2.0);
-
-                  
-         startTime = SDL_GetPerformanceCounter();
       } else {
          // If the bird doesn't rotate, we just move foward
          newDirection = allBirds[i].directionalAngle + 1.5708;
@@ -202,6 +204,7 @@ void randomFly()
       allBirds[i].center.x += cos(newDirection) * step * speed;
       allBirds[i].center.y += sin(newDirection) * step * speed;
 
+      newDirection -= 1.5708;
 
       if (allBirds[i].center.x > 1.0)
          allBirds[i].center.x = -1.0 + std::fmod(allBirds[i].center.x, 1.0);
@@ -218,15 +221,14 @@ void randomFly()
       
       updateVerticesBird(i);
 
-      if (1) {
-         newDirection -= 1.5708;
-
-         allBirds[i].directionalAngle = newDirection;
-         allBirds[i].rotate();
-      }
+      allBirds[i].directionalAngle = newDirection;
+      allBirds[i].rotate();
 
       updateBuffer(i);
    }
+
+   if (rotate)
+      startTime = SDL_GetPerformanceCounter();
 }
 
 void update()
