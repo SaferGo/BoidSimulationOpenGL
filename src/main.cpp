@@ -17,10 +17,13 @@
 //#include <boidSimulation/ResourceManager.h>
 #include <boidSimulation/glShaderLoader.h>
 
+#define PI 3.1415
 std::mt19937 gen(time(0));
 const int MAX_N_BOIDS = 10;
 int boidsIn = 0;
 GLuint buffer, VAO;
+unsigned int startTime, currentTime;
+double deltaTime;
 
 struct Pos
 {
@@ -31,43 +34,46 @@ struct Pos
    Pos(const Pos& newPos) : x(newPos.x), y(newPos.y) {}
 };
 
-struct CurrentPathInfo
-{
-   Pos start, end, curve;
-   float t;
-
-   CurrentPathInfo(const Pos newStart, const Pos newEnd, const Pos newCurve)
-      : start(newStart), end(newEnd), curve(newCurve), t(0.0) {}
-};
-
 class Bird
 {
 public:
    float pos[9];
    Pos center;
+   float directionalAngle;
 
    Bird(float x, float y)
    : pos{ x - 0.02f, y, 0.0f, x + 0.02f, y, 0.0f, x, y + 0.1f, 0.0f},
      center(x, y)
    {}
-      //x - 0.01f, y, 0.0f,
-      //x + 0.01f, y, 0.0f,
-      //x, y + 0.1f, 0.0f }
 
    static size_t getSizeOfPosArray()
    {
       return sizeof(pos) / sizeof(float);
    }
 
+   void rotate()
+   {
+      for (int i = 0; i <= 6; i += 3) {
+         float x1 = pos[i] - center.x;
+         float y1 = pos[i + 1] - center.y;
+
+         float x2 = 
+            x1 * cos(directionalAngle) - 
+            y1 * sin(directionalAngle);
+         float y2 =
+            x1 * sin(directionalAngle) +
+            y1 * cos(directionalAngle);
+
+         pos[i] = x2 + center.x;
+         pos[i + 1] = y2 + center.y;
+      }
+   }
    ~Bird() = default;
 
 private:
 };
 
 std::vector<Bird> allBirds;
-std::vector<bool> isFlying;
-std::vector<Pos> actualTarget;
-std::vector<CurrentPathInfo> currentPath;
 
 void initGLAD()
 {
@@ -103,16 +109,23 @@ void createGUI()
    ImGui::End();
 }
 
+void updateVerticesBird(const int bird)
+{
+   Pos centerBird = allBirds[bird].center;
+   allBirds[bird] = Bird(centerBird.x, centerBird.y);
+}
+
 void generateNewBird(float x, float y)
 {
    if (boidsIn > MAX_N_BOIDS)
       return;
 
    Bird newBird(x, y);
-   allBirds.push_back(newBird);
-   isFlying.push_back(false);
-   actualTarget.push_back(Pos(x, y));
-   currentPath.push_back(CurrentPathInfo(Pos(x, y), Pos(x, y), Pos(x, y)));
+   
+   std::uniform_int_distribution<> randAngle(0, 360);
+   float newDirection = randAngle(gen) * PI / 180.0;
+   newBird.directionalAngle = newDirection;
+   newBird.rotate();
 
    glBindVertexArray(VAO);
 
@@ -125,37 +138,8 @@ void generateNewBird(float x, float y)
    glBindBuffer(GL_ARRAY_BUFFER, 0);
    glBindVertexArray(0);
    
+   allBirds.push_back(newBird);
    boidsIn++;
-}
-
-Pos calculateCurvePoint(CurrentPathInfo cp)
-{
-   // float distX = abs(cp.start.x - cp.end.x) / 2.0;
-   // return Pos(distX + cp.start.x, cp.end.y);
-   std::uniform_int_distribution<> distrX(-680, 680);
-   std::uniform_int_distribution<> distrY(-480, 480);
-
-   return Pos(distrX(gen) / 680.0, distrY(gen) / 480.0);
-}
-
-void generateNewTarget(int bird)
-{
-   std::uniform_int_distribution<> distrX(-680, 680);
-   std::uniform_int_distribution<> distrY(-480, 480);
-
-   isFlying[bird] = true;
-   actualTarget[bird].x = distrX(gen) / 680.0;
-   actualTarget[bird].y = distrY(gen) / 480.0;
-   currentPath[bird].start = allBirds[bird].center;
-   currentPath[bird].end = actualTarget[bird];
-   currentPath[bird].curve = calculateCurvePoint(currentPath[bird]);
-   currentPath[bird].t = 0.0;
-}
-
-void updateVerticesBird(const int bird)
-{
-   Pos centerBird = allBirds[bird].center;
-   allBirds[bird] = Bird(centerBird.x, centerBird.y);
 }
 
 void updateBuffer(const int bird)
@@ -176,74 +160,78 @@ void updateBuffer(const int bird)
    glBindVertexArray(0);
 }
 
-Pos quadraticBezier(CurrentPathInfo cp)
-{
-   Pos newPos;
-
-   newPos.x = std::pow(1 - cp.t, 2) * cp.start.x +
-      (1 - cp.t) * 2 * cp.t * cp.curve.x + cp.t * cp.t * cp.end.x;
-   newPos.y = std::pow(1 - cp.t, 2) * cp.start.y +
-      (1 - cp.t) * 2 * cp.t * cp.curve.y + cp.t * cp.t * cp.end.y;
-
-   return newPos;
-}
-
-void moveToTarget(int boid)
-{
-   
-   // Method #1
-   //const float speed = 0.001;
-   //const float step = 0.001;
-
-   //float directionX = (actualTarget[boid].x > allBirds[boid].center.x)? 1.0 : -1.0;
-   //float directionY = (actualTarget[boid].y > allBirds[boid].center.y)? 1.0 : -1.0;
-
-   //if (abs(allBirds[boid].center.x - actualTarget[boid].x) > 0.001)
-   //   allBirds[boid].center.x += step * directionX * speed;
-   //if (abs(allBirds[boid].center.y - actualTarget[boid].y) > 0.001)
-   //   allBirds[boid].center.y += step * directionY * speed;
-
-   // Method #2
-   // ....
-
-   // Method #3
-   const float step = 0.05;
-   Pos newPos = quadraticBezier(currentPath[boid]);
-   currentPath[boid].t += step * 0.001;
-
-   allBirds[boid].center = newPos;
-
-
-   updateVerticesBird(boid);
-}
-
 void randomFly()
 {
    for (int i = 0; i < boidsIn; i++) {
 
-      if (isFlying[i] == false) {
-         generateNewTarget(i);
-         isFlying[i] = true;
+      const float step = 0.01;
+      const float speed = 0.008;
+      double newDirection;
 
+      // The birds rotate after a period of time
+      bool rotate = false;
+      currentTime = SDL_GetPerformanceCounter();
+      deltaTime = (double) (
+         (currentTime - startTime) /
+         (double) SDL_GetPerformanceFrequency()
+      );
+
+      std::cout << "DELTA: " << deltaTime << std::endl;
+      if (deltaTime > 0.001) {
+         rotate = true;
+
+         std::uniform_int_distribution<> randAngle(-7, 7);
+
+         // Since the triangles are already 90 degrees rotated,
+         // we need to add it to the translation
+         newDirection = double (
+            (randAngle(gen) * PI / 180.0) +
+            allBirds[i].directionalAngle +
+            1.5708
+         );
+
+         newDirection = std::fmod(newDirection, PI * 2.0);
+
+                  
+         startTime = SDL_GetPerformanceCounter();
       } else {
-         moveToTarget(i);
-         updateBuffer(i);
-         
-         // Method 1
-         //if (abs(allBirds[i].center.x - actualTarget[i].x) < 0.001 &&
-         //    abs(allBirds[i].center.y - actualTarget[i].y) < 0.001) {
-         //      isFlying[i] = false;
-         //}
-         if (abs(currentPath[i].t - 1.0) < 0.0001)
-            isFlying[i] = false;
+         // If the bird doesn't rotate, we just move foward
+         newDirection = allBirds[i].directionalAngle + 1.5708;
       }
+
+      allBirds[i].center.x += cos(newDirection) * step * speed;
+      allBirds[i].center.y += sin(newDirection) * step * speed;
+
+
+      if (allBirds[i].center.x > 1.0)
+         allBirds[i].center.x = -1.0 + std::fmod(allBirds[i].center.x, 1.0);
+      
+      if (allBirds[i].center.x < -1.0)
+         allBirds[i].center.x = 1.0 - std::fmod(allBirds[i].center.x, 1.0);
+
+      if (allBirds[i].center.y > 1.0)
+         allBirds[i].center.y = -1.0 + std::fmod(allBirds[i].center.y, 1.0);
+      
+      if (allBirds[i].center.y < -1.0)
+         allBirds[i].center.y = 1.0 - std::fmod(allBirds[i].center.y, 1.0);
+
+      
+      updateVerticesBird(i);
+
+      if (1) {
+         newDirection -= 1.5708;
+
+         allBirds[i].directionalAngle = newDirection;
+         allBirds[i].rotate();
+      }
+
+      updateBuffer(i);
    }
 }
 
 void update()
 {
    createGUI();
-
 
    randomFly();
 }
@@ -326,6 +314,8 @@ int main()
    GLuint shaderProgram;
    if (load(shaderProgram) == false)
       return -1;
+
+   startTime = SDL_GetPerformanceCounter();
 
    bool appRunning = true;
 
