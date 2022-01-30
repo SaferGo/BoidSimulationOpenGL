@@ -75,4 +75,3 @@ WindowManager::~WindowManager()
 {
    SDL_DestroyWindow(window);
 }
-

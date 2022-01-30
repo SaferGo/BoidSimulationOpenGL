@@ -20,6 +20,10 @@ set(GLAD_DIR "${PROJECT_LIBRARIES_DIR}/glad")
 add_library(glad "${GLAD_DIR}/src/glad.c")
 include_directories("${GLAD_DIR}/include")
 
+# GLM
+set(GLM_DIR "${PROJECT_LIBRARIES_DIR}/glm")
+add_subdirectory(${GLM_DIR} EXCLUDE_FROM_ALL)
+
 # ImGui
 # Compile imGUI as an static library.
 set(IMGUI_DIR "${PROJECT_LIBRARIES_DIR}/imgui")
@@ -43,6 +47,11 @@ add_executable(${PROJECT_NAME}
    "${PROJECT_SOURCE_DIR}/glShaderLoader.cpp"
    "${PROJECT_SOURCE_DIR}/Renderer.cpp"
    "${PROJECT_SOURCE_DIR}/WindowManager.cpp"
+   "${PROJECT_SOURCE_DIR}/util.cpp"
+   "${PROJECT_SOURCE_DIR}/config.cpp"
+   "${PROJECT_SOURCE_DIR}/Boid.cpp"
+   "${PROJECT_SOURCE_DIR}/Flock.cpp"
+   "${PROJECT_SOURCE_DIR}/Simulation.cpp"
 )
 
 target_include_directories(
@@ -54,6 +63,7 @@ target_include_directories(
 
 target_link_libraries(${PROJECT_NAME} PUBLIC
    glad 
+   glm
    ${SDL2_LIBRARIES} 
    imgui
    PRIVATE ${CMAKE_DL_LIBS})

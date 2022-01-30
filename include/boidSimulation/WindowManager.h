@@ -17,8 +17,11 @@ public:
    void destroyWindow();
 
 private:
+
    static WindowManager* instance;
    SDL_Window* window;
+
+   // ========================== Methods ==========================
 
    WindowManager(
          const unsigned int width,
@@ -27,6 +30,7 @@ private:
    );
    ~WindowManager();
    void initSDL();
+
    WindowManager(const WindowManager& windowManager) = delete;
    WindowManager* operator=(const WindowManager& windowManager) = delete;
 

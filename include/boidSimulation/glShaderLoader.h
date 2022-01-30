@@ -8,9 +8,9 @@
 namespace glShaderLoader
 {
    std::string readFile(const char* filePath);
-   void printShaderCompilationErrors(const GLuint shader);
-   void printShaderLinkingErrors(const GLuint program);
-   GLuint loadShader(const char* vertexPath, const char* fragmentPath);
+   void printShaderCompilationErrors(const unsigned int shader);
+   void printShaderLinkingErrors(const unsigned int program);
+   unsigned int loadShader(const char* vertexPath, const char* fragmentPath);
 }
 
 #endif

@@ -1,7 +1,6 @@
 #include <boidSimulation/Renderer.h>
 
 #include <iostream>
-#include <exception>
 
 Renderer* Renderer::instance = nullptr;
 

@@ -25,7 +25,7 @@ std::string glShaderLoader::readFile(const char* filePath)
    return shaderContent;
 }
 
-void glShaderLoader::printShaderCompilationErrors(const GLuint shader)
+void glShaderLoader::printShaderCompilationErrors(const unsigned int shader)
 {
    char infoLog[512];
    glGetShaderInfoLog(shader, 512, NULL, infoLog);
@@ -33,7 +33,7 @@ void glShaderLoader::printShaderCompilationErrors(const GLuint shader)
    std::cerr << infoLog << std::endl;
 }
 
-void glShaderLoader::printShaderLinkingErrors(const GLuint program)
+void glShaderLoader::printShaderLinkingErrors(const unsigned int program)
 {
    char infoLog[512];
    glGetProgramInfoLog(program, 512, NULL, infoLog);
@@ -42,12 +42,12 @@ void glShaderLoader::printShaderLinkingErrors(const GLuint program)
 }
 
 
-GLuint glShaderLoader::loadShader(
+unsigned int glShaderLoader::loadShader(
       const char* vertexPath,
       const char* fragmentPath
 ){
-   GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-   GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+   unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
+   unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 
    const std::string vertexShaderStr = readFile(vertexPath);
    const std::string fragmentShaderStr = readFile(fragmentPath);
@@ -95,7 +95,7 @@ GLuint glShaderLoader::loadShader(
 
    std::cout << "#### Linking shaders to the program ###\n";
    
-   GLuint program = glCreateProgram();
+   unsigned int program = glCreateProgram();
    glAttachShader(program, vertexShader);
    glAttachShader(program, fragmentShader);
    glLinkProgram(program);
