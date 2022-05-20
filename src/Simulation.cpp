@@ -2,7 +2,7 @@
 
 #include <exception>
 
-#include <iostream>
+#include <boidSimulation/util.h>
 
 Simulation::Simulation()
 {
@@ -18,6 +18,12 @@ Simulation::Simulation()
    for (int i = 0; i < config::MAX_N_OBSTACLES; i++)
    {
       Obstacle newObstacle = Obstacle();
+      
+      while (util::doesCollide(newObstacle, obstacles) == true)
+      {
+         newObstacle = Obstacle();
+      }
+
       obstacles.push_back(newObstacle);
    }
 

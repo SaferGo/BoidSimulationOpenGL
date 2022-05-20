@@ -5,7 +5,7 @@
 Obstacle::Obstacle()
 {
    std::uniform_real_distribution<> randPos(-1.0, 1.0);
-   std::uniform_real_distribution<> randRad(0.02, 0.2);
+   std::uniform_real_distribution<> randRad(0.05, 0.1);
    std::uniform_real_distribution<> randColor(0.0, 1.0);
 
    center = glm::vec2(randPos(config::gen), randPos(config::gen));

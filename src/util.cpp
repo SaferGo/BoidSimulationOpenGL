@@ -56,3 +56,20 @@ glm::vec2 util::getSteeringVector(const glm::vec2 desired, const glm::vec2 v)
 {
    return clampMag(desired - v, config::MAX_MAG);
 }
+
+bool util::doesCollide(Obstacle& newObstacle, std::vector<Obstacle>& obstacles)
+{
+   for (const auto& otherObstacle : obstacles)
+   {
+      float sumOfRadius = otherObstacle.radius + newObstacle.radius;
+      float distance =
+         fabs(
+            glm::distance(otherObstacle.center, newObstacle.center)
+         ) - sumOfRadius;
+
+      if (distance <= 0.0)
+         return true;
+   }
+
+   return false;
+}
