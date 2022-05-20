@@ -15,13 +15,14 @@
 #include <boidSimulation/glShaderLoader.h>
 #include <boidSimulation/config.h>
 #include <boidSimulation/Flock.h>
+#include <boidSimulation/Obstacle.h>
 
 class Simulation
 {
 
 public:
 
-   Simulation(const int nSpecies, const int nBoids);
+   Simulation();
    ~Simulation();
 
    void run();
@@ -29,6 +30,7 @@ public:
 private:
 
    std::vector<Flock> flocks;
+   std::vector<Obstacle> obstacles;
    bool appRunning;
    
    WindowManager* window;
@@ -36,7 +38,7 @@ private:
    SDL_GLContext  glContext;
    unsigned int   shaderProgram;
 
-   unsigned int buffer;
+   unsigned int bufferVertex, bufferColor;
    unsigned int VAO;
 
    // ========================== Methods ==========================
@@ -48,10 +50,20 @@ private:
 
    // OpenGL functions
    void initGLAD();
-   void updateChunkOfBuffer(const int i, glm::vec2* data);
-   void updateAllBuffer();
+   void updateBoidChunk();
+   void updateChunkOfBuffer(
+         const unsigned int buffer,
+         const unsigned int vertexOffset,
+         const unsigned int sizeData,
+         void* data
+   );
+   void initBuffers();
+   void createObjectBuffer();
+   void createColorBuffer();
+   void fillObstacleChunk();
+   void fillColorBuffer();
+
    void initShaders();
-   void setupVertices();
 
    // ImGui functions
    void initImGui();

@@ -5,23 +5,26 @@
 
 namespace config
 {
-   extern std::mt19937 gen;
+   inline std::mt19937 gen = std::mt19937(time(0));
 
-   extern const char* WINDOW_TITLE;
-   extern const int   RESOLUTION_W;
-   extern const int   RESOLUTION_H;
+   inline constexpr char* WINDOW_TITLE = (char*)"Boid Simulator";
+   inline constexpr int   RESOLUTION_W = 1080;
+   inline constexpr int   RESOLUTION_H = 880;
 
-   extern const float B_WIDTH;
-   extern const float B_HEIGHT;
+   inline constexpr float B_WIDTH = 0.01;
+   inline constexpr float B_HEIGHT = 0.03;
 
-   extern const int   MAX_N_BOIDS;
-   extern const float MAX_SPEED;
-   extern const float MIN_SPEED;
-   extern const float MAX_MAG;
+   inline constexpr int   MAX_N_SPECIES = 20;
+   inline constexpr int   MAX_N_BOIDS = 50;
+   inline constexpr int   MAX_N_OBSTACLES = 10;
+   inline constexpr int   N_TRIANG_PER_CIRCLE = 30;
+   inline constexpr float MAX_SPEED = 0.0095;
+   inline constexpr float MIN_SPEED = 0.0045;
+   inline constexpr float MAX_MAG = 0.055;
 
-   extern float cohesionScalar;
-   extern float separationScalar;
-   extern float alignmentScalar;
+   inline float cohesionScalar = 1.0f;
+   inline float separationScalar = 1.0f;
+   inline float alignmentScalar = 1.0f;
 }
 
 #endif

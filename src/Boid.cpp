@@ -3,8 +3,7 @@
 #include <boidSimulation/util.h>
 #include <boidSimulation/config.h>
 
-Boid::Boid(int newID)
-   : id(newID)
+Boid::Boid(const int newID) : id(newID)
 {
    std::uniform_real_distribution<> rand(-1.0, 1.0);
    

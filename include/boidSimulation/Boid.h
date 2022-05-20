@@ -23,7 +23,7 @@ public:
       
    // ========================== Methods ==========================
 
-   Boid(int newID);
+   Boid(const int newID);
    ~Boid();
 
    void moveFoward();

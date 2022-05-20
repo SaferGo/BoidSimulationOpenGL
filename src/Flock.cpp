@@ -3,19 +3,18 @@
 #include <boidSimulation/config.h>
 #include <boidSimulation/util.h>
 
-Flock::Flock(int n)
+Flock::Flock(const int n)
 {
+   color[0] = color[1] = color[2] = pickRandColor();
+   
    for (int i = 0; i < n; i++)
    {
       Boid newBoid = Boid(i);
-
-      //updateChunkOfBuffer(i, newBoid.pos);
-
       boids.push_back(newBoid);
    }
 }
 
-void Flock::toFlock()
+void Flock::toFlock(const std::vector<Obstacle> &obstacles)
 {
    for (auto& boid: boids)
    {
@@ -24,6 +23,9 @@ void Flock::toFlock()
       newAcceleration += alignment(boid)  * config::alignmentScalar;
       newAcceleration += cohesion(boid)   * config::cohesionScalar;
       newAcceleration += separation(boid) * config::separationScalar;
+
+      // avoid collisions
+      newAcceleration += avoidObstacles(boid, obstacles);
       
       // To make the acceleration softer(more realistic).
       newAcceleration *= 0.005f;
@@ -44,6 +46,39 @@ void Flock::toFlock()
       boid.moveFoward();
       boid.keepInsideBorders();
    }
+}
+
+glm::vec2 Flock::avoidObstacles(
+      const Boid& boid, 
+      const std::vector<Obstacle> &obstacles
+){
+   glm::vec2 avg = glm::vec2(0.0);
+   int nNeighbords = 0;
+
+   for (const auto& obstacle : obstacles)
+   {
+         float d = glm::length(obstacle.center - boid.center) - obstacle.radius;
+
+         if (d < 0.18)
+         {
+            glm::vec2 oppositeDir = boid.center - obstacle.center;
+            oppositeDir /= d;
+
+            avg += oppositeDir;
+            nNeighbords++;
+         }
+   }
+
+   if (nNeighbords == 0)
+      return avg;
+
+   glm::vec2 avgVelocity = avg / float(nNeighbords);
+
+   avgVelocity = util::setMag(avgVelocity, config::MAX_SPEED);
+
+   glm::vec2 steering = util::getSteeringVector(avgVelocity, boid.velocity);
+
+   return steering;
 }
 
 glm::vec2 Flock::alignment(const Boid& boid)
@@ -147,6 +182,17 @@ glm::vec2 Flock::getAverageVector(const Boid& boid, const int type)
       return avg;
    else 
       return (avg / float(nNeighbords));
+}
+
+glm::vec3 Flock::pickRandColor()
+{
+   std::uniform_real_distribution<> rand(0.0, 1.0);
+
+   return glm::vec3(
+         rand(config::gen),
+         rand(config::gen),
+         rand(config::gen)
+   );
 }
 
 int Flock::getSize()
