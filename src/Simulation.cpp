@@ -2,35 +2,43 @@
 
 #include <exception>
 
-#include <boidSimulation/util.h>
-
 Simulation::Simulation()
 {
-
-   // Create n species of boids
-   for (int i = 0; i < config::MAX_N_SPECIES; i++)
+   
+   try 
    {
-      Flock newFlock = Flock(config::MAX_N_BOIDS);
-      flocks.push_back(newFlock);
+      // Init Window
+      _window = WindowManager::getInstance(
+            config::RESOLUTION_W,
+            config::RESOLUTION_H,
+            config::WINDOW_TITLE
+      );
+
+      // Init Renderer
+      _renderer = Renderer::getInstance(_window->getWindow());
+
+      initGLAD();
+
+      _glContext = SDL_GL_CreateContext(_window->getWindow());
+
+      initImGui();
+
+   } catch (const std::exception& e)
+   {
+      std::cout << e.what() << std::endl;
+      _appRunning = false;
+
+      return;
    }
 
-   // Create m obstacles
-   for (int i = 0; i < config::MAX_N_OBSTACLES; i++)
-   {
-      Obstacle newObstacle = Obstacle();
-      
-      while (util::doesCollide(newObstacle, obstacles) == true)
-      {
-         newObstacle = Obstacle();
-      }
+   createFlocks();
+   createObstacles();
 
-      obstacles.push_back(newObstacle);
-   }
-
-   init();
-
-   updateBoidChunk();
-   appRunning = true;
+   initShaders();
+   initBuffers();
+   
+   _appRunning = true;
+   _FPS = 0;
 }
 
 Simulation::~Simulation()
@@ -39,69 +47,78 @@ Simulation::~Simulation()
    ImGui_ImplSDL2_Shutdown();
    ImGui::DestroyContext();
 
-   SDL_GL_DeleteContext(glContext);
-   renderer->destroyRenderer();
-   window->destroyWindow();
+   SDL_GL_DeleteContext(_glContext);
+   _renderer->destroyRenderer();
+   _window->destroyWindow();
+}
+
+void Simulation::createFlocks()
+{
+   // Create n species of boids
+
+   _flocks.reserve(config::MAX_N_SPECIES);
+  
+   for (int i = 0; i < config::MAX_N_SPECIES; i++)
+      _flocks.push_back(Flock());
+}
+
+void Simulation::createObstacles()
+{
+   _obstacles.reserve(config::MAX_N_OBSTACLES);
+
+   for (int i = 0; i < config::MAX_N_OBSTACLES; i++)
+   {
+      _obstacles.push_back(Obstacle(i));
+      
+      while (_obstacles[i].doesCollide(_obstacles) == true)
+         _obstacles[i] = Obstacle(i);
+
+   }
+}
+
+void Simulation::calculateFPS()
+{
+   static int fps = 0;
+   static float lastTime = 0.0f;
+
+   float currentTime = SDL_GetTicks() * 0.001f;
+   fps++;
+
+   if (currentTime - lastTime > 1.0f)
+   {
+      _FPS = fps;
+      lastTime = currentTime;
+      fps = 0;
+   }
 }
 
 void Simulation::run()
 {
-   while (appRunning) {
+   while (_appRunning) {
 
-      checkUserInput();
-      
-      if (!appRunning)
-         break;
-      
       update();
-
       render();
-      
-      window->swapBuffers();
+
+      calculateFPS();
    }
 }
 
-void Simulation::init()
-{
-   
-   try 
-   {
-      // Init Window
-      window = WindowManager::getInstance(
-            config::RESOLUTION_W,
-            config::RESOLUTION_H,
-            config::WINDOW_TITLE
-      );
-
-      // Init Renderer
-      renderer = Renderer::getInstance(window->getWindow());
-
-      initGLAD();
-
-      glContext = SDL_GL_CreateContext(window->getWindow());
-
-      initImGui();
-
-   } catch (const std::exception& e)
-   {
-      std::cout << e.what() << std::endl;
-      appRunning = false;
-
-      return;
-   }
-
-   initShaders();
-   initBuffers();
-}
 
 void Simulation::update()
 {
+   checkUserInput();
+
    updateGUI();
 
-   for (auto& flock : flocks)
-      flock.toFlock(obstacles);
+   updateFlocks();
    
    updateBoidChunk();
+}
+
+void Simulation::updateFlocks()
+{
+   for (auto& flock : _flocks)
+      flock.toFlock(_obstacles);
 }
 
 void Simulation::render()
@@ -110,13 +127,10 @@ void Simulation::render()
    glClearColor(0.4, 0.1, 0.2, 1);
    glClear(GL_COLOR_BUFFER_BIT);
 
-   // Render imgui
-   ImGui::Render();
-   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
+   
    // Render triangles
-   glUseProgram(shaderProgram);
-   glBindVertexArray(VAO);
+   glUseProgram(_shaderProgram);
+   glBindVertexArray(_VAO);
    glDrawArrays(
          GL_TRIANGLES,
          0,
@@ -125,9 +139,15 @@ void Simulation::render()
             (3 * config::MAX_N_OBSTACLES * config::N_TRIANG_PER_CIRCLE)
          )
    );
-
    
-   glBindVertexArray(VAO);
+   glBindVertexArray(_VAO);
+
+   // Render imgui
+   // (we've to render it after glDraw to appear on top of the _window)
+   ImGui::Render();
+   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+   _window->swapBuffers();
 }
 
 void Simulation::checkUserInput()
@@ -141,10 +161,10 @@ void Simulation::checkUserInput()
       if (event.type == SDL_QUIT ||
          (event.type == SDL_WINDOWEVENT &&
             event.window.event == SDL_WINDOWEVENT_CLOSE &&
-             event.window.windowID == SDL_GetWindowID(window->getWindow())
+             event.window.windowID == SDL_GetWindowID(_window->getWindow())
          )
       ){
-         appRunning = false;
+         _appRunning = false;
          break;
       }
    }
@@ -166,17 +186,16 @@ void Simulation::updateBoidChunk()
    {
       for (int j = 0; j < config::MAX_N_BOIDS; j++)
       {
-         unsigned int vertexOffset = 
-            (
-             (6 * j) +
-             (i * config::MAX_N_BOIDS * 6)
-            ) * sizeof(float);
+         unsigned int vertexOffset = (
+               (6 * j) +
+               (i * config::MAX_N_BOIDS * 6)
+         ) * sizeof(float);
 
          updateChunkOfBuffer(
-               bufferVertex, 
+               _bufferVertex, 
                vertexOffset,
-               6, 
-               &flocks[i].boids[j].pos
+               6,
+               _flocks[i].getBoidPosition(j)
          );
       }
    }
@@ -188,7 +207,7 @@ void Simulation::updateChunkOfBuffer(
       const unsigned int sizeData,
       void* data
 ){ 
-   glBindVertexArray(VAO);
+   glBindVertexArray(_VAO);
    glBindBuffer(GL_ARRAY_BUFFER, buffer);
    
    glBufferSubData(
@@ -204,7 +223,7 @@ void Simulation::initShaders()
 {
    try
    {
-      shaderProgram =
+      _shaderProgram =
          glShaderLoader::loadShader(
             "../shaders/boids.vert", 
             "../shaders/boids.frag"
@@ -212,130 +231,129 @@ void Simulation::initShaders()
    } catch(const std::exception& e)
    {
       std::cerr << e.what() << std::endl;
-      appRunning = false;
+      _appRunning = false;
    }
 }
 
 void Simulation::initBuffers()
 {
-   glGenVertexArrays(1, &VAO);
+   glGenVertexArrays(1, &_VAO);
    
-   createObjectBuffer();
+   createVertexBuffer();
    createColorBuffer();
    
    // Fill static buffers
    fillObstacleChunk();
-   fillColorBuffer();
+   fillColorBoidBuffer();
 }
 
-/*
-// Mejorar este comentario
-// typeDrawing:
-// 0: Static
-// 1: DYNAMIC
-// 2: STREAM
 void Simulation::createBuffer(
-      unsigned int nElements,
+      const size_t bufferSize,
       unsigned int& buffer,
-      unsigned int typeDrawing
-)
-{
-   size_t bufferSize =
-      nElements * config::MAX_N_BOIDS * config::MAX_N_SPECIES * size(float);
+      const GLenum bufferType,
+      const GLenum drawingType
+) {
 
    glGenBuffers(1, &buffer);
-   glBindBuffer(GL_ARRAY_BUFFER, buffer);
-   
-   if (typeDrawing == 0)
-      glBufferData(GL_ARRAY_BUFFER, bufferSize, NULL, GL_DYNAMIC_STATIC);
-   else if (typeDrawing == 1)
-      glBufferData(GL_ARRAY_BUFFER, bufferSize, NULL, GL_DYNAMIC_DYNAMIC);
-   else
-      glBufferData(GL_ARRAY_BUFFER, bufferSize, NULL, GL_STREAM_DRAW);
-
-   glBindVertexArray(VAO);
-
-   glEnableVertexArrayAttrib(VAO, 0);
-   glVertexArrayVertexBuffer(VAO, 0, buffer, 0, sizeof(float) * 2);
-   glVertexArrayAttribBinding(VAO, 0, 0);
-   glVertexArrayAttribFormat(VAO, 0, 2, GL_FLOAT, GL_FALSE, 0);
-
-   glBindBuffer(GL_ARRAY_BUFFER, 0);
-   glBindVertexArray(0);
-}
-*/
-
-void Simulation::createObjectBuffer()
-{
-   // Create buffer
-   size_t bufferSize = 
-      (
-       (6 * config::MAX_N_BOIDS * config::MAX_N_SPECIES) +
-       (6 * config::N_TRIANG_PER_CIRCLE * config::MAX_N_OBSTACLES)
-      ) * sizeof(float);
-
-   std::cout << "BUFFER SIZE: " << bufferSize << std::endl;
-   // Create a big buffer for all the boids and the obstacles
-   glGenBuffers(1, &bufferVertex);
    // We indicate the type of buffer
-   glBindBuffer(GL_ARRAY_BUFFER, bufferVertex);
+   glBindBuffer(bufferType, buffer);
    // We allocate the buffer with determined size but with 0 elements.
-   glBufferData(GL_ARRAY_BUFFER, bufferSize, NULL, GL_DYNAMIC_DRAW);
+   glBufferData(bufferType, bufferSize, NULL, drawingType);
 
+   // To unbind the buffer(state-machine..)
+   glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
 
-   // Bindeamos con el VAO
-   glBindVertexArray(VAO);
+void Simulation::bindBufferToVAO(
+      const unsigned int vao,
+      const unsigned int index,
+      const unsigned int buffer,
+      const unsigned int offset,
+      const unsigned int stride
+) {
+   // We bind the VAO to configure it
+   glBindVertexArray(vao);
 
-   // Seleccionamos que index del VAO queremos usar para este buffer.
-   // Esto se llama "vertex buffer binding index" -> indice usado en el VAO para
+   // Seleccionamos que index del _VAO queremos usar para este buffer.
+   // Esto se llama "vertex buffer binding index" -> indice usado en el _VAO para
    // identificar un VBO.
    // (en este caso queremos usar el 0)
-   // (acordate que el VAO contine los "punteros" a los VBO)
-   glEnableVertexArrayAttrib(VAO, 0);
-   // 1) VAO,
-   // 2) Index of VBO in VAO,
+   // (acordate que el _VAO contine los "punteros" a los VBO)
+   glEnableVertexArrayAttrib(vao, index);
+   // 1) _VAO,
+   // 2) Index of VBO in _VAO,
    // 3) VBO,
    // 4) Offset within the VBO,
    // 5) stride(distance between the elements within the VBO).
-   glVertexArrayVertexBuffer(VAO, 0, bufferVertex, 0, sizeof(float) * 2);
+   glVertexArrayVertexBuffer(vao, index, buffer, offset, stride);
+
+   glBindVertexArray(0);
+}
+
+void Simulation::bindVertexAttribute(
+      const unsigned int vao,
+      const unsigned int vaoIndex,
+      const unsigned int shaderAttribIndex,
+      const unsigned int nComponents,
+      const GLenum type,
+      const GLenum isNormalized,
+      const unsigned int distance
+) {
+
+   glBindVertexArray(vao);
+
    // Aca hacemos la conexion con el shader.
    // Associates a vertex attribute(an input variable to a shader that is 
    // supplied with per-vertex data) and a vertex buffer binding for a vertex
    // array object.
-   // 1) VAO
-   // 2) Vertex attribute(el que esta en el shader).
+   // 1) _VAO
+   // 2) Shader attribute index(el que esta en el shader).
    // 3) Vertex buffer binding index.
-   glVertexArrayAttribBinding(VAO, 0, 0);
-   glVertexArrayAttribFormat(VAO, 0, 2, GL_FLOAT, GL_FALSE, 0);
 
-   glBindBuffer(GL_ARRAY_BUFFER, 0);
+   glVertexArrayAttribBinding(vao, shaderAttribIndex, vaoIndex);
+
+   // 1) VAO.
+   // 2) Shader Attribute index.
+   // 3) Number of components.
+   // 4) Type of component.
+   // 5) If the components are normalized.
+   // 6) Distance between elements within the buffer.
+
+   glVertexArrayAttribFormat(
+         vao, shaderAttribIndex, nComponents, type, isNormalized, distance
+   );
+
    glBindVertexArray(0);
+}
+
+
+void Simulation::createVertexBuffer()
+{
+   // Create buffer
+   size_t bufferSize = (
+       (6 * config::MAX_N_BOIDS * config::MAX_N_SPECIES) +
+       (6 * config::N_TRIANG_PER_CIRCLE * config::MAX_N_OBSTACLES)
+   ) * sizeof(float);
+
+   // Create a big buffer for all the boids and the obstacles
+   createBuffer(bufferSize, _bufferVertex, GL_ARRAY_BUFFER, GL_DYNAMIC_DRAW);
+   bindBufferToVAO(_VAO, 0, _bufferVertex, 0, sizeof(float) * 2);
+   bindVertexAttribute(_VAO, 0, 0, 2, GL_FLOAT, GL_FALSE, 0);
 }
 
 void Simulation::createColorBuffer()
 {
-   size_t bufferSize =
-      (
-       (9 * config::MAX_N_BOIDS * config::MAX_N_SPECIES) +
-       (9 * config::N_TRIANG_PER_CIRCLE * config::MAX_N_OBSTACLES)
-      ) * sizeof(float);
+   size_t bufferSize = (
+         (9 * config::MAX_N_BOIDS * config::MAX_N_SPECIES) +
+         (9 * config::N_TRIANG_PER_CIRCLE * config::MAX_N_OBSTACLES)
+   ) * sizeof(float);
 
-   glGenBuffers(1, &bufferColor);
-   glBindBuffer(GL_ARRAY_BUFFER, bufferColor);
-   glBufferData(GL_ARRAY_BUFFER, bufferSize, NULL, GL_STATIC_DRAW);
-
-   glBindVertexArray(VAO);
-
-   glEnableVertexArrayAttrib(VAO, 1);
-   glVertexArrayVertexBuffer(VAO, 1, bufferColor, 0, sizeof(float) * 3);
-   glVertexArrayAttribBinding(VAO, bufferColor, 1);
-   glVertexArrayAttribFormat(VAO, 1, 3, GL_FLOAT, GL_FALSE, 0);
-
-   glBindBuffer(GL_ARRAY_BUFFER, 0);
-   glBindVertexArray(0);
+   createBuffer(bufferSize, _bufferColor, GL_ARRAY_BUFFER, GL_STATIC_DRAW);
+   bindBufferToVAO(_VAO, 1, _bufferColor, 0, sizeof(float) * 3);
+   bindVertexAttribute(_VAO, 1, 1, 3, GL_FLOAT, GL_FLOAT, 0);
 }
 
-void Simulation::fillColorBuffer()
+void Simulation::fillColorBoidBuffer()
 {
    // Color-Boid chunk
 
@@ -350,62 +368,56 @@ void Simulation::fillColorBuffer()
             ) * sizeof(float);
 
          updateChunkOfBuffer(
-               bufferColor,
+               _bufferColor,
                vertexOffset,
                9,
-               &flocks[i].color
-         );
-      }
-   }
-
-   // Color-Obstacle chunk
-   
-   const unsigned int startIndex = 
-      9 * config::MAX_N_SPECIES * config::MAX_N_BOIDS * sizeof(float);
-
-   for (int i = 0; i < config::MAX_N_OBSTACLES; i++)
-   {
-      for (int j = 0; j < config::N_TRIANG_PER_CIRCLE; j++)
-      {
-         const unsigned int vertexOffset =
-            (
-             (9 * j) +
-             (i * config::N_TRIANG_PER_CIRCLE * 9)
-            ) * sizeof(float) + startIndex;
-
-         updateChunkOfBuffer(
-               bufferColor,
-               vertexOffset,
-               9,
-               &obstacles[i].color
+               _flocks[i].getColor()
          );
       }
    }
 }
 
-// fix this!
-
 void Simulation::fillObstacleChunk()
 {
-   const unsigned int startIndex =
+   const unsigned int startIndexVertex =
       6 * config::MAX_N_BOIDS * config::MAX_N_SPECIES * sizeof(float);
+   const unsigned int startIndexColor = 
+      9 * config::MAX_N_SPECIES * config::MAX_N_BOIDS * sizeof(float);
+
 
    for (int i = 0; i < config::MAX_N_OBSTACLES; i++)
    {
       for (int j = 0; j < config::N_TRIANG_PER_CIRCLE; j++)
       {
-         const unsigned int vertexOffset =
-            (
+
+         // Fill vertex buffer
+
+         const unsigned int vertexOffset = (
              (6 * j) +
              (i * config::N_TRIANG_PER_CIRCLE * 6)
-            ) * sizeof(float) + startIndex;
+         ) * sizeof(float) + startIndexVertex;
 
          updateChunkOfBuffer(
-               bufferVertex,
+               _bufferVertex,
                vertexOffset,
                6,
-               &obstacles[i].pos[j]
+               _obstacles[i].getPos(j)
          );
+
+         // Fill color buffer
+
+         const unsigned int colorOffset = (
+             (9 * j) +
+             (i * config::N_TRIANG_PER_CIRCLE * 9)
+         ) * sizeof(float) + startIndexColor;
+         
+         updateChunkOfBuffer(
+               _bufferColor,
+               colorOffset,
+               9,
+               _obstacles[i].getColor()
+         );
+
       }
    }
 }
@@ -420,7 +432,7 @@ void Simulation::initImGui()
 
    ImGui::StyleColorsDark();
    
-   ImGui_ImplSDL2_InitForOpenGL(window->getWindow(), glContext);
+   ImGui_ImplSDL2_InitForOpenGL(_window->getWindow(), _glContext);
    ImGui_ImplOpenGL3_Init();
 }
 
@@ -428,11 +440,12 @@ void Simulation::updateGUI()
 {
    // Start the Dear ImGui frame
    ImGui_ImplOpenGL3_NewFrame();
-   ImGui_ImplSDL2_NewFrame(window->getWindow());
+   ImGui_ImplSDL2_NewFrame(_window->getWindow());
    ImGui::NewFrame();
 
    // Draw GUI
    ImGui::Begin("Settings");
+   ImGui::Text("_FPS: %s", std::to_string(_FPS).c_str());
    ImGui::SliderFloat("Alignment" , &config::alignmentScalar, 0.0f, 2.0f);
    ImGui::SliderFloat("Cohesion"  , &config::cohesionScalar, 0.0f, 2.0f);
    ImGui::SliderFloat("Separation", &config::separationScalar, 0.0f, 2.0f);

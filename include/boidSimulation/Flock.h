@@ -12,23 +12,27 @@ class Flock
 {
 
 public:
-   std::vector<Boid> boids;
-   glm::vec3 color[3];
 
-   Flock(const int n);
-   void toFlock(const std::vector<Obstacle> &obstacles);
+   Flock();
+   ~Flock();
+   void toFlock(const std::vector<Obstacle>& obstacles);
+   glm::vec2* getBoidPosition(const int i);
+   glm::vec3* getColor();
 
 private:
 
-   glm::vec2 alignment(const Boid& boid);
-   glm::vec2 cohesion(const Boid& boid);
-   glm::vec2 separation(const Boid& boid);
+   std::vector<Boid> _boids;
+   glm::vec3 _color[3];
+
+   glm::vec2 alignment(const Boid& boid) const;
+   glm::vec2 cohesion(const Boid& boid) const;
+   glm::vec2 separation(const Boid& boid) const;
    
-   glm::vec2 getAverageVector(const Boid& boid, const int type);
-   glm::vec3 pickRandColor();
-   int getSize();
+   glm::vec2 getAverageVector(const Boid& boid, const int type) const;
+   glm::vec3 pickRandColor() const;
    glm::vec2 avoidObstacles(
-         const Boid& boid, const std::vector<Obstacle> &obstacles);
+         const Boid& boid, const std::vector<Obstacle>& obstacles
+   ) const;
 };
 
 #endif

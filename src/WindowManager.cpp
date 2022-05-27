@@ -13,6 +13,9 @@ WindowManager::WindowManager(
       const char* title
 ){
       this->initSDL();
+      
+      enableMSAA();
+
       window = SDL_CreateWindow(
             title,
             SDL_WINDOWPOS_CENTERED,
@@ -58,6 +61,12 @@ void WindowManager::initSDL()
             )
       );
    }
+}
+
+void WindowManager::enableMSAA()
+{
+   SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+   SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 16);
 }
 
 void WindowManager::swapBuffers()

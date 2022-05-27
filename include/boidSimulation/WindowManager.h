@@ -15,6 +15,7 @@ public:
    SDL_Window* getWindow();
    void swapBuffers();
    void destroyWindow();
+   void enableMSAA();
 
 private:
 
