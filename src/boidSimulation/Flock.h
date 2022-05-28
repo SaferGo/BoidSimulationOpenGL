@@ -1,5 +1,4 @@
-#ifndef FLOCK_H
-#define FLOCK_H
+#pragma once
 
 #include <vector>
 
@@ -34,5 +33,3 @@ private:
          const Boid& boid, const std::vector<Obstacle>& obstacles
    ) const;
 };
-
-#endif

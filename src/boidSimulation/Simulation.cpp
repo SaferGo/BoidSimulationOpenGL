@@ -52,10 +52,9 @@ Simulation::~Simulation()
    _window->destroyWindow();
 }
 
+// Creates n species of boids.
 void Simulation::createFlocks()
 {
-   // Create n species of boids
-
    _flocks.reserve(config::MAX_N_SPECIES);
   
    for (int i = 0; i < config::MAX_N_SPECIES; i++)
@@ -123,12 +122,12 @@ void Simulation::updateFlocks()
 
 void Simulation::render()
 {
-   // Render frame logic
+   // Renders the frame logic
    glClearColor(0.4, 0.1, 0.2, 1);
    glClear(GL_COLOR_BUFFER_BIT);
 
    
-   // Render triangles
+   // Renders the triangles
    glUseProgram(_shaderProgram);
    glBindVertexArray(_VAO);
    glDrawArrays(
@@ -142,7 +141,7 @@ void Simulation::render()
    
    glBindVertexArray(_VAO);
 
-   // Render imgui
+   // Renders imgui
    // (we've to render it after glDraw to appear on top of the _window)
    ImGui::Render();
    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -172,14 +171,14 @@ void Simulation::checkUserInput()
 
 // ========================== OpenGL functions ==========================
 
+// Initializes GLAD and load all the GL function pointers.
 void Simulation::initGLAD()
 {
-   // Here we initialize GLAD and load all the GL function pointers.
    if (!gladLoadGLLoader((GLADloadproc) SDL_GL_GetProcAddress))
       throw std::runtime_error("Failed to initialize GLAD.");
 }
 
-// Update the chunk of the buffer that contains the boids
+// Updates the chunk of the buffer that contains the boids
 void Simulation::updateBoidChunk()
 {
    for (int i = 0; i < config::MAX_N_SPECIES; i++)
@@ -218,7 +217,7 @@ void Simulation::updateChunkOfBuffer(
    glBindVertexArray(0);
 }
 
-// Build and compile the shaders.
+// Builds and compiles the shaders.
 void Simulation::initShaders()
 {
    try
@@ -242,7 +241,7 @@ void Simulation::initBuffers()
    createVertexBuffer();
    createColorBuffer();
    
-   // Fill static buffers
+   // Fills static buffers
    fillObstacleChunk();
    fillColorBoidBuffer();
 }
@@ -271,25 +270,28 @@ void Simulation::bindBufferToVAO(
       const unsigned int offset,
       const unsigned int stride
 ) {
-   // We bind the VAO to configure it
+   // We bind the VAO to configure it.
    glBindVertexArray(vao);
 
-   // Seleccionamos que index del _VAO queremos usar para este buffer.
-   // Esto se llama "vertex buffer binding index" -> indice usado en el _VAO para
-   // identificar un VBO.
-   // (en este caso queremos usar el 0)
-   // (acordate que el _VAO contine los "punteros" a los VBO)
+   // 1) VAO.
+   // 2) VAO's index that we want to use for this buffer.
+   // (vertex buffer binding index)
+   // (VAO contains "the pointers" to the VBOs.
    glEnableVertexArrayAttrib(vao, index);
-   // 1) _VAO,
-   // 2) Index of VBO in _VAO,
-   // 3) VBO,
-   // 4) Offset within the VBO,
-   // 5) stride(distance between the elements within the VBO).
+
+   // 1) VAO,
+   // 2) Vertex buffer binding index
+   // 3) VBO
+   // 4) Offset within the VBO.
+   // 5) Stride(distance between the elements within the VBO).
    glVertexArrayVertexBuffer(vao, index, buffer, offset, stride);
 
+   // After we finished all the configuration, we need to unbind the VAO to
+   // prevent future errors.
    glBindVertexArray(0);
 }
 
+// Creates the "binding" with the shader.
 void Simulation::bindVertexAttribute(
       const unsigned int vao,
       const unsigned int vaoIndex,
@@ -302,12 +304,11 @@ void Simulation::bindVertexAttribute(
 
    glBindVertexArray(vao);
 
-   // Aca hacemos la conexion con el shader.
    // Associates a vertex attribute(an input variable to a shader that is 
    // supplied with per-vertex data) and a vertex buffer binding for a vertex
    // array object.
-   // 1) _VAO
-   // 2) Shader attribute index(el que esta en el shader).
+   // 1) VAO
+   // 2) Shader attribute index(the one that is in the shader).
    // 3) Vertex buffer binding index.
 
    glVertexArrayAttribBinding(vao, shaderAttribIndex, vaoIndex);
@@ -318,7 +319,6 @@ void Simulation::bindVertexAttribute(
    // 4) Type of component.
    // 5) If the components are normalized.
    // 6) Distance between elements within the buffer.
-
    glVertexArrayAttribFormat(
          vao, shaderAttribIndex, nComponents, type, isNormalized, distance
    );
@@ -327,6 +327,8 @@ void Simulation::bindVertexAttribute(
 }
 
 
+// Creates the buffer that will contains all the vertices of the boids and
+// the obstacles.
 void Simulation::createVertexBuffer()
 {
    // Create buffer
@@ -335,12 +337,14 @@ void Simulation::createVertexBuffer()
        (6 * config::N_TRIANG_PER_CIRCLE * config::MAX_N_OBSTACLES)
    ) * sizeof(float);
 
-   // Create a big buffer for all the boids and the obstacles
+   // Create a big empty buffer for all the boids and the obstacles.
    createBuffer(bufferSize, _bufferVertex, GL_ARRAY_BUFFER, GL_DYNAMIC_DRAW);
    bindBufferToVAO(_VAO, 0, _bufferVertex, 0, sizeof(float) * 2);
    bindVertexAttribute(_VAO, 0, 0, 2, GL_FLOAT, GL_FALSE, 0);
 }
 
+// Creates the buffer that will contains all the colors for all the boids
+// and obstacles.
 void Simulation::createColorBuffer()
 {
    size_t bufferSize = (
@@ -353,19 +357,17 @@ void Simulation::createColorBuffer()
    bindVertexAttribute(_VAO, 1, 1, 3, GL_FLOAT, GL_FLOAT, 0);
 }
 
+// Fills the chunk that belongs to the boid's color.
 void Simulation::fillColorBoidBuffer()
 {
-   // Color-Boid chunk
-
    for (int i = 0; i < config::MAX_N_SPECIES; i++)
    {
       for (int j = 0; j < config::MAX_N_BOIDS; j++)
       {
-         const unsigned int vertexOffset =
-            (
+         const unsigned int vertexOffset = (
              (9 * j) +
              (i * config::MAX_N_BOIDS * 9)
-            ) * sizeof(float);
+         ) * sizeof(float);
 
          updateChunkOfBuffer(
                _bufferColor,
@@ -377,6 +379,7 @@ void Simulation::fillColorBoidBuffer()
    }
 }
 
+// Fills the color and vertex chunks of the obstacles.
 void Simulation::fillObstacleChunk()
 {
    const unsigned int startIndexVertex =
@@ -390,7 +393,7 @@ void Simulation::fillObstacleChunk()
       for (int j = 0; j < config::N_TRIANG_PER_CIRCLE; j++)
       {
 
-         // Fill vertex buffer
+         // Fills the vertex buffer
 
          const unsigned int vertexOffset = (
              (6 * j) +
@@ -404,7 +407,7 @@ void Simulation::fillObstacleChunk()
                _obstacles[i].getPos(j)
          );
 
-         // Fill color buffer
+         // Fills the color buffer
 
          const unsigned int colorOffset = (
              (9 * j) +
@@ -438,14 +441,25 @@ void Simulation::initImGui()
 
 void Simulation::updateGUI()
 {
-   // Start the Dear ImGui frame
+   // Starts the Dear ImGui frame
    ImGui_ImplOpenGL3_NewFrame();
    ImGui_ImplSDL2_NewFrame(_window->getWindow());
    ImGui::NewFrame();
 
-   // Draw GUI
+   // Draws the GUI
    ImGui::Begin("Settings");
-   ImGui::Text("_FPS: %s", std::to_string(_FPS).c_str());
+   ImGui::Text("FPS: %s", std::to_string(_FPS).c_str());
+   ImGui::Text(
+         "Number of species: %s", std::to_string(config::MAX_N_SPECIES).c_str()
+   );
+   ImGui::Text(
+         "Number of boids per specie: %s",
+         std::to_string(config::MAX_N_BOIDS).c_str()
+   );
+   ImGui::Text(
+         "Number of obstacles: %s",
+         std::to_string(config::MAX_N_OBSTACLES).c_str()
+   );
    ImGui::SliderFloat("Alignment" , &config::alignmentScalar, 0.0f, 2.0f);
    ImGui::SliderFloat("Cohesion"  , &config::cohesionScalar, 0.0f, 2.0f);
    ImGui::SliderFloat("Separation", &config::separationScalar, 0.0f, 2.0f);

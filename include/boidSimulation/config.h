@@ -1,5 +1,4 @@
-#ifndef CONFIG_H
-#define CONFIG_H
+#pragma once
 
 #include <random>
 
@@ -20,11 +19,16 @@ namespace config
    inline constexpr float MIN_SPEED         = 0.0045;
    inline constexpr float MAX_MAG           = 0.055;
    
-   inline float cohesionScalar = 1.0f;
+   inline constexpr float ALIGNMENT_DIST   = 0.19;
+   inline constexpr float ALIGNMENT_RANGE  = 1.57;
+   inline constexpr float COHESION_DIST    = 0.20;
+   inline constexpr float COHESION_RANGE   = 1.57;
+   inline constexpr float SEPARATION_DIST  = 0.18;
+   inline constexpr float SEPARATION_RANGE = 1.57;
+   
+   inline float cohesionScalar   = 1.0f;
    inline float separationScalar = 1.0f;
-   inline float alignmentScalar = 1.0f;
+   inline float alignmentScalar  = 1.0f;
 
    inline std::mt19937 gen = std::mt19937(time(0));
 }
-
-#endif

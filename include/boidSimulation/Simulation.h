@@ -1,5 +1,4 @@
-#ifndef SIMULATION_H
-#define SIMULATION_H
+#pragma once
 
 #include <iostream>
 #include <vector>
@@ -97,5 +96,3 @@ private:
    void updateGUI();
 
 };
-
-#endif

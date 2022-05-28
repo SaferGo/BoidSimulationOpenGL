@@ -3,6 +3,10 @@
 #include <boidSimulation/config.h>
 #include <boidSimulation/util.h>
 
+#define ALIGNMENT  0
+#define COHESION   1
+#define SEPARATION 2
+
 Flock::Flock()
 {
    _boids.reserve(config::MAX_N_BOIDS);
@@ -22,17 +26,16 @@ void Flock::toFlock(const std::vector<Obstacle>& obstacles)
       newAcceleration += cohesion(boid)   * config::cohesionScalar;
       newAcceleration += separation(boid) * config::separationScalar;
 
-      // avoid collisions
+      // Avoids collisions
       newAcceleration += avoidObstacles(boid, obstacles);
       
-      // To make the acceleration softer(more realistic).
+      // Makes the acceleration softer(more realistic).
       newAcceleration *= 0.005f;
       
-      // We update the velocity
+      // Updates the velocity
       boid._velocity += newAcceleration;
       
-      // We have to limit the velocity because 
-      // if not, it will increase infinitly.
+      // Limits the velocity because if not, it will increase infinitly.
       boid._velocity = util::clampMag(boid._velocity, config::MAX_SPEED);
       
       // If we changed the velocity it means that it is almost
@@ -47,7 +50,7 @@ void Flock::toFlock(const std::vector<Obstacle>& obstacles)
 }
 
 glm::vec2 Flock::avoidObstacles(
-      const Boid& boid, const std::vector<Obstacle>& obstacles) const 
+      const Boid& boid, const std::vector<Obstacle>& obstacles) const
 {
 
    glm::vec2 avg = glm::vec2(0.0);
@@ -79,8 +82,7 @@ glm::vec2 Flock::avoidObstacles(
          boid._velocity
    );
 
-   // The steering force has to be big when the boids
-   // hit a obstacle
+   // The steering force has to be big when the boids hit a obstacle.
    return steering * 3.0f;
 }
 
@@ -94,9 +96,10 @@ glm::vec3* Flock::getColor()
    return &_color[0];
 }
 
+// Calculates the average velocity.
 glm::vec2 Flock::alignment(const Boid& boid) const
 {
-   glm::vec2 avgVelocity = getAverageVector(boid, 0);
+   glm::vec2 avgVelocity = getAverageVector(boid, ALIGNMENT);
 
    if (util::isZeroVector(avgVelocity))
       return avgVelocity;
@@ -111,9 +114,10 @@ glm::vec2 Flock::alignment(const Boid& boid) const
 }
 
 // Center of mass -> avgPosition
+// Calculates the average position.
 glm::vec2 Flock::cohesion(const Boid& boid) const
 {
-   glm::vec2 avgPosition = getAverageVector(boid, 1);
+   glm::vec2 avgPosition = getAverageVector(boid, COHESION);
 
    if (avgPosition == glm::vec2(0.0))
       return avgPosition;
@@ -126,9 +130,10 @@ glm::vec2 Flock::cohesion(const Boid& boid) const
    return steering;
 }
 
+// Keeps distance between the boids of the same specie.
 glm::vec2 Flock::separation(const Boid& boid) const
 {
-   glm::vec2 avgVelocity = getAverageVector(boid, 2);
+   glm::vec2 avgVelocity = getAverageVector(boid, SEPARATION);
 
    if (avgVelocity == glm::vec2(0.0))
       return avgVelocity;
@@ -140,9 +145,6 @@ glm::vec2 Flock::separation(const Boid& boid) const
    return steering;
 }
 
-// Type == 0: Alignment
-// Type == 1: Cohesion
-// Type == 2: Separation
 glm::vec2 Flock::getAverageVector(const Boid& boid, const int type) const
 {
    glm::vec2 avg = glm::vec2(0.0);
@@ -156,22 +158,18 @@ glm::vec2 Flock::getAverageVector(const Boid& boid, const int type) const
       float range = std::abs(util::getAngle(boid._velocity, other._velocity));
       float d = glm::length(boid._center - other._center);
 
-      // ~Alignment~
-      // We need to calculate the average velocity.
-      if (type == 0)
+      if (type == ALIGNMENT)
       {
-         if (d < 0.19 && range < 1.57) {
+         if (d < config::ALIGNMENT_DIST && range < config::ALIGNMENT_RANGE) {
             avg += other._velocity;
             nNeighbords++;
          }
 
       } 
 
-      // ~Cohesion~
-      // We need to calculate the average position.
-      if (type == 1)
+      if (type == COHESION)
       {
-         if (d < 0.20 && range < 1.57)
+         if (d < config::COHESION_DIST && range < config::COHESION_RANGE)
          {
             avg += other._center;
             nNeighbords++;
@@ -179,9 +177,9 @@ glm::vec2 Flock::getAverageVector(const Boid& boid, const int type) const
       }
 
       // ~Separation~
-      if (type == 2)
+      if (type == SEPARATION)
       {
-         if (d < 0.18 && range < 1.57)
+         if (d < config::SEPARATION_DIST && range < config::SEPARATION_RANGE)
          {
             glm::vec2 oppositeDir = boid._center - other._center;
             oppositeDir /= d;

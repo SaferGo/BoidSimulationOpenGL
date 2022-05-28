@@ -3,7 +3,6 @@
 #include <iostream>
 #include <string>
 #include <fstream>
-#include <vector>
 
 
 std::string glShaderLoader::readFile(const char* filePath)
@@ -16,8 +15,10 @@ std::string glShaderLoader::readFile(const char* filePath)
 
    std::string line;
    while (!fileStream.eof()) {
+
       std::getline(fileStream, line);
       shaderContent.append(line + "\n");
+
    }
 
    fileStream.close();

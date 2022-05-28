@@ -43,22 +43,23 @@ target_include_directories(
 
 # Executable
 add_executable(${PROJECT_NAME} 
-   "${PROJECT_SOURCE_DIR}/main.cpp"
-   "${PROJECT_SOURCE_DIR}/glShaderLoader.cpp"
-   "${PROJECT_SOURCE_DIR}/Renderer.cpp"
-   "${PROJECT_SOURCE_DIR}/WindowManager.cpp"
-   "${PROJECT_SOURCE_DIR}/util.cpp"
-   "${PROJECT_SOURCE_DIR}/Boid.cpp"
-   "${PROJECT_SOURCE_DIR}/Flock.cpp"
-   "${PROJECT_SOURCE_DIR}/Simulation.cpp"
-   "${PROJECT_SOURCE_DIR}/Obstacle.cpp"
+   "${PROJECT_SOURCE_DIR}/boidSimulation/main.cpp"
+   "${PROJECT_SOURCE_DIR}/boidSimulation/glShaderLoader.cpp"
+   "${PROJECT_SOURCE_DIR}/boidSimulation/Renderer.cpp"
+   "${PROJECT_SOURCE_DIR}/boidSimulation/WindowManager.cpp"
+   "${PROJECT_SOURCE_DIR}/boidSimulation/util.cpp"
+   "${PROJECT_SOURCE_DIR}/boidSimulation/Boid.cpp"
+   "${PROJECT_SOURCE_DIR}/boidSimulation/Flock.cpp"
+   "${PROJECT_SOURCE_DIR}/boidSimulation/Simulation.cpp"
+   "${PROJECT_SOURCE_DIR}/boidSimulation/Obstacle.cpp"
 )
 
 target_include_directories(
    ${PROJECT_NAME}
    PUBLIC
-      "${PROJECT_SOURCE_DIR}"
       "${PROJECT_INCLUDE_DIR}"
+   PRIVATE
+      "${PROJECT_SOURCE_DIR}"
 )
 
 target_link_libraries(${PROJECT_NAME} PUBLIC

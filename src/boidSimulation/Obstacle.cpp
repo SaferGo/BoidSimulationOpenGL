@@ -21,7 +21,7 @@ Obstacle::Obstacle(const unsigned id) : _id(id)
 
 void Obstacle::createTrianglesOfCircle()
 {
-   float pi2 = 3.141592f * 2.0f;
+   const float pi2 = 3.141592f * 2.0f;
    glm::vec2 newPoint = _center;
 
    for (int i = 0; i < config::N_TRIANG_PER_CIRCLE; i++)
@@ -48,7 +48,9 @@ bool Obstacle::doesCollide(const std::vector<Obstacle>& obstacles) const
          continue;
 
       float sumOfRadius = other._radius + _radius;
-      float distance = fabs(glm::distance(other._center, _center)) - sumOfRadius;
+      float distance = fabs(
+            glm::distance(other._center, _center)
+      ) - sumOfRadius;
 
       if (distance <= 0.0)
          return true;
@@ -62,7 +64,7 @@ glm::vec3* Obstacle::getColor()
    return &(_color[0]);
 }
 
-glm::vec2* Obstacle::getPos(int i)
+glm::vec2* Obstacle::getPos(const unsigned int i)
 {
    return &(_pos[i][0]);
 }

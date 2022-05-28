@@ -1,5 +1,4 @@
-#ifndef OBSTACLE_H
-#define OBSTACLE_H
+#pragma once
 
 #include <vector>
 
@@ -18,7 +17,7 @@ public:
    Obstacle(const unsigned id);
    bool doesCollide(const std::vector<Obstacle>& obstacles) const;
    glm::vec3* getColor();
-   glm::vec2* getPos(int i);
+   glm::vec2* getPos(const unsigned int i);
    
 private:
 
@@ -33,5 +32,3 @@ private:
 
    void createTrianglesOfCircle();
 };
-
-#endif

@@ -57,7 +57,7 @@ void Boid::keepInsideBorders()
          _center.x -= (2.0 + config::B_HEIGHT);
          for (int i = 0; i < 3; i++)
             _pos[i].x -= (2.0 + config::B_HEIGHT);
-                                       }
+      }
       else if (_center.x < -1.0)
       {
          _center.x += (2.0 + config::B_HEIGHT);

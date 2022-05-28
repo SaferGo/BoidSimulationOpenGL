@@ -1,5 +1,4 @@
-#ifndef RENDERER_H
-#define RENDERER_H
+#pragma once
 
 #include <SDL2/SDL.h>
 
@@ -9,7 +8,7 @@ class Renderer
 public:
 
    static Renderer* getInstance(SDL_Window* window);
-   SDL_Renderer* getRenderer();
+   SDL_Renderer* getRenderer() const;
    void destroyRenderer();
 
 private:
@@ -18,10 +17,9 @@ private:
    SDL_Renderer* renderer;
 
    // ========================== Methods ==========================
+   //
    Renderer(SDL_Window* window);
    Renderer(const Renderer& other) = delete;
    Renderer& operator=(const Renderer& other) = delete;
    ~Renderer();
 };
-
-#endif

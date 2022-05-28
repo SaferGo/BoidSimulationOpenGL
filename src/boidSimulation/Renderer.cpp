@@ -10,10 +10,9 @@ Renderer::Renderer(SDL_Window* window)
 
    if (!renderer) {
       throw std::runtime_error(
-               strcat(
-                  (char*)"Failed to create SDL2 renderer.\nError: ",
-                  SDL_GetError()
-               )
+            strcat((char*)"Failed to create SDL2 renderer.\nError: ",
+               SDL_GetError()
+            )
       );
    }
 
@@ -27,7 +26,7 @@ Renderer* Renderer::getInstance(SDL_Window* window)
    return instance;
 }
 
-SDL_Renderer* Renderer::getRenderer()
+SDL_Renderer* Renderer::getRenderer() const
 {
    return renderer;
 }

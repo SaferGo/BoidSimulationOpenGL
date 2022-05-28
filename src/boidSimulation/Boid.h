@@ -1,5 +1,4 @@
-#ifndef BOID_H
-#define BOID_H
+#pragma once
 
 #include <glm/glm.hpp>
 
@@ -24,11 +23,10 @@ private:
    // pos[0] -> left tail of triangle
    // pos[1] -> right tail of triangle
    // pos[2] -> top of the triangle
-   // Also the boid has an acceleration which we gonna use it 
-   // to change the velocity in every update (remember that 
-   // acceleration is when the velocity changes). We gonna
-   // update the acceleration in the flock function.
-
+   // Also the boid has an acceleration which we gonna use it to change the 
+   // velocity in every update (remember that acceleration is when the 
+   // velocity changes). We gonna update the acceleration in the flock 
+   // function.
    glm::vec2 _pos[3];
    glm::vec2 _center;
    glm::vec2 _velocity;
@@ -40,5 +38,3 @@ private:
    bool isOutOfScreen() const;
    
 };
-
-#endif

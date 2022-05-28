@@ -33,10 +33,9 @@ glm::vec2 util::clampMag(const glm::vec2 v, const float mag)
       return v;
 }
 
-// We calculate the angle between the direction vectors.
-// To do that, we first have to clamp the dot product
-// between [-1.0, 1.0] because if not, we gonna receive
-// NaN from glm::acos.
+// Calculates the angle between the direction vectors.
+// To do that, first it has to clamp the dot product between [-1.0, 1.0] 
+// because if not, we gonna receive NaN from glm::acos.
 float util::getAngle(const glm::vec2 a, const glm::vec2 b)
 {
    glm::vec2 d1 = glm::normalize(a);
@@ -50,9 +49,8 @@ bool util::isZeroVector(const glm::vec2 v)
    return (v.x == 0.0 && v.y == 0.0);
 }
 
-// Steering asdsa
-// Explain why clamp
 glm::vec2 util::getSteeringVector(const glm::vec2 desired, const glm::vec2 v)
 {
+   // Limits the maximum steering force
    return clampMag(desired - v, config::MAX_MAG);
 }

@@ -1,5 +1,4 @@
-#ifndef UTIL_H
-#define UTIL_H
+#pragma once
 
 #include <glm/glm.hpp>
 
@@ -12,5 +11,3 @@ namespace util
    float getAngle(const glm::vec2 a, const glm::vec2 b);
    bool isZeroVector(const glm::vec2 v);
 }
-
-#endif

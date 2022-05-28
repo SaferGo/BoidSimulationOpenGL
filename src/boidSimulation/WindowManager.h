@@ -1,5 +1,4 @@
-#ifndef WINDOWMANAGER_H
-#define WINDOWMANAGER_H
+#pragma once
 
 #include <SDL2/SDL.h>
 
@@ -36,5 +35,3 @@ private:
    WindowManager* operator=(const WindowManager& windowManager) = delete;
 
 };
-
-#endif

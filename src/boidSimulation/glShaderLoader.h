@@ -1,5 +1,4 @@
-#ifndef GLSHADERLOADER_H
-#define GLSHADERLOADER_H
+#pragma once
 
 #include <string>
 
@@ -12,5 +11,3 @@ namespace glShaderLoader
    void printShaderLinkingErrors(const unsigned int program);
    unsigned int loadShader(const char* vertexPath, const char* fragmentPath);
 }
-
-#endif
