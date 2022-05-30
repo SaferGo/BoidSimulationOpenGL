@@ -37,5 +37,5 @@
 ```diff
 $ git clone https://github.com/SaferGo/boid-simulation-opengl.git
 $ cd boid-simulation-opengl
-$ ./run.sh
+$ bash run.sh
 ```
