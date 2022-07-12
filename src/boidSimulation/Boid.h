@@ -27,14 +27,14 @@ private:
    // velocity in every update (remember that acceleration is when the 
    // velocity changes). We gonna update the acceleration in the flock 
    // function.
-   glm::vec2 _pos[3];
-   glm::vec2 _center;
-   glm::vec2 _velocity;
-   int _id;
+   glm::vec2 m_pos[3];
+   glm::vec2 m_center;
+   glm::vec2 m_velocity;
+   int m_id;
 
    // ========================== Methods ==========================
 
-   bool isOutOfBorder(const glm::vec2 _pos) const;
+   bool isOutOfBorder(const glm::vec2 pos) const;
    bool isOutOfScreen() const;
    
 };

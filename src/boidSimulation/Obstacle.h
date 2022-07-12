@@ -22,11 +22,11 @@ public:
 private:
 
    // All vertices that compose the triangle
-   glm::vec2 _pos[config::N_TRIANG_PER_CIRCLE][3];
-   glm::vec2 _center;
-   float _radius;
-   glm::vec3 _color[3];
-   unsigned _id;
+   glm::vec2 m_pos[config::N_TRIANG_PER_CIRCLE][3];
+   glm::vec2 m_center;
+   float m_radius;
+   glm::vec3 m_color[3];
+   unsigned m_id;
 
    // ========================== Methods ==========================
 

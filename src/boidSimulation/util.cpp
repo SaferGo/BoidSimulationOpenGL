@@ -4,7 +4,7 @@
 
 glm::vec2 util::generateRandVelocity()
 {
-   std::uniform_real_distribution<> randD(-1.0, 1.0);
+   std::uniform_real_distribution<> randD(0.0, 1.0);
    std::uniform_real_distribution<> randS(
          config::MIN_SPEED, 
          config::MAX_SPEED
@@ -12,7 +12,8 @@ glm::vec2 util::generateRandVelocity()
 
    glm::vec2 direction = glm::normalize(
          glm::vec2(
-            randD(config::gen), randD(config::gen)
+            (randD(config::gen) * 2.0) - 1.0,
+            (randD(config::gen) * 2.0) - 1.0
          )
    );
    float speed = randS(config::gen);

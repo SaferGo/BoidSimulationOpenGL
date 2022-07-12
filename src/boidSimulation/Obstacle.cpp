@@ -2,15 +2,18 @@
 
 #include <boidSimulation/config.h>
 
-Obstacle::Obstacle(const unsigned id) : _id(id)
+Obstacle::Obstacle(const unsigned id) : m_id(id)
 {
-   std::uniform_real_distribution<> randPos(-1.0, 1.0);
+   std::uniform_real_distribution<> randPos(0.0, 1.0);
    std::uniform_real_distribution<> randRad(0.05, 0.1);
    std::uniform_real_distribution<> randColor(0.0, 1.0);
 
-   _center = glm::vec2(randPos(config::gen), randPos(config::gen));
-   _radius = randRad(config::gen);
-   _color[0] = _color[1] = _color[2] = glm::vec3(
+   m_center = glm::vec2(
+         (randPos(config::gen) * 2.0) - 1.0,
+         (randPos(config::gen) * 2.0) - 1.0
+   );
+   m_radius = randRad(config::gen);
+   m_color[0] = m_color[1] = m_color[2] = glm::vec3(
             randColor(config::gen),
             randColor(config::gen),
             randColor(config::gen)
@@ -22,20 +25,20 @@ Obstacle::Obstacle(const unsigned id) : _id(id)
 void Obstacle::createTrianglesOfCircle()
 {
    const float pi2 = 3.141592f * 2.0f;
-   glm::vec2 newPoint = _center;
+   glm::vec2 newPoint = m_center;
 
    for (int i = 0; i < config::N_TRIANG_PER_CIRCLE; i++)
    {
-      _pos[i][0] = _center;
+      m_pos[i][0] = m_center;
 
       for (int j = 1; j <= 2; j++)
       {
          float angle = pi2 * (i + j - 1) / 30.0f;
 
-         newPoint.x = _center.x + cos(angle) * _radius;
-         newPoint.y = _center.y + sin(angle) * _radius;
+         newPoint.x = m_center.x + cos(angle) * m_radius;
+         newPoint.y = m_center.y + sin(angle) * m_radius;
 
-         _pos[i][j] = newPoint;
+         m_pos[i][j] = newPoint;
       }
    }
 }
@@ -44,12 +47,12 @@ bool Obstacle::doesCollide(const std::vector<Obstacle>& obstacles) const
 {
    for (const auto& other : obstacles)
    {
-      if (_id == other._id)
+      if (m_id == other.m_id)
          continue;
 
-      float sumOfRadius = other._radius + _radius;
+      float sumOfRadius = other.m_radius + m_radius;
       float distance = fabs(
-            glm::distance(other._center, _center)
+            glm::distance(other.m_center, m_center)
       ) - sumOfRadius;
 
       if (distance <= 0.0)
@@ -61,10 +64,10 @@ bool Obstacle::doesCollide(const std::vector<Obstacle>& obstacles) const
 
 glm::vec3* Obstacle::getColor()
 {
-   return &(_color[0]);
+   return &(m_color[0]);
 }
 
 glm::vec2* Obstacle::getPos(const unsigned int i)
 {
-   return &(_pos[i][0]);
+   return &(m_pos[i][0]);
 }

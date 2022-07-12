@@ -9,16 +9,16 @@
 
 Flock::Flock()
 {
-   _boids.reserve(config::MAX_N_BOIDS);
-   _color[0] = _color[1] = _color[2] = pickRandColor();
+   m_boids.reserve(config::MAX_N_BOIDS);
+   m_color[0] = m_color[1] = m_color[2] = pickRandColor();
    
    for (int i = 0; i < config::MAX_N_BOIDS; i++)
-      _boids.push_back(Boid(i));
+      m_boids.push_back(Boid(i));
 }
 
 void Flock::toFlock(const std::vector<Obstacle>& obstacles)
 {
-   for (auto& boid: _boids)
+   for (auto& boid: m_boids)
    {
       glm::vec2 newAcceleration = glm::vec2(0.0);
       
@@ -33,10 +33,10 @@ void Flock::toFlock(const std::vector<Obstacle>& obstacles)
       newAcceleration *= 0.005f;
       
       // Updates the velocity
-      boid._velocity += newAcceleration;
+      boid.m_velocity += newAcceleration;
       
       // Limits the velocity because if not, it will increase infinitly.
-      boid._velocity = util::clampMag(boid._velocity, config::MAX_SPEED);
+      boid.m_velocity = util::clampMag(boid.m_velocity, config::MAX_SPEED);
       
       // If we changed the velocity it means that it is almost
       // for sure that we changed the direction, so we have
@@ -58,11 +58,11 @@ glm::vec2 Flock::avoidObstacles(
 
    for (const auto& obstacle : obstacles)
    {
-         float d = fabs(glm::length(obstacle._center - boid._center));
+         float d = fabs(glm::length(obstacle.m_center - boid.m_center));
 
-         if (d - 0.045f < obstacle._radius)
+         if (d - 0.045f < obstacle.m_radius)
          {
-            glm::vec2 oppositeDir = boid._center - obstacle._center;
+            glm::vec2 oppositeDir = boid.m_center - obstacle.m_center;
             oppositeDir /= d;
 
             avg += oppositeDir;
@@ -79,7 +79,7 @@ glm::vec2 Flock::avoidObstacles(
 
    glm::vec2 steering = util::getSteeringVector(
          avgVelocity,
-         boid._velocity
+         boid.m_velocity
    );
 
    // The steering force has to be big when the boids hit a obstacle.
@@ -88,12 +88,12 @@ glm::vec2 Flock::avoidObstacles(
 
 glm::vec2* Flock::getBoidPosition(const int i)
 {
-   return &_boids[i]._pos[0];
+   return &m_boids[i].m_pos[0];
 }
 
 glm::vec3* Flock::getColor()
 {
-   return &_color[0];
+   return &m_color[0];
 }
 
 // Calculates the average velocity.
@@ -107,7 +107,7 @@ glm::vec2 Flock::alignment(const Boid& boid) const
    avgVelocity = util::setMag(avgVelocity, config::MAX_SPEED);
 
    glm::vec2 steering = util::getSteeringVector(
-         avgVelocity, boid._velocity
+         avgVelocity, boid.m_velocity
    );
 
    return steering;
@@ -122,10 +122,12 @@ glm::vec2 Flock::cohesion(const Boid& boid) const
    if (avgPosition == glm::vec2(0.0))
       return avgPosition;
 
-   glm::vec2 toCenterOfMass = avgPosition - boid._center;
+   glm::vec2 toCenterOfMass = avgPosition - boid.m_center;
    toCenterOfMass = util::setMag(toCenterOfMass, config::MAX_SPEED);
 
-   glm::vec2 steering = util::getSteeringVector(toCenterOfMass, boid._velocity);
+   glm::vec2 steering = util::getSteeringVector(
+         toCenterOfMass, boid.m_velocity
+   );
    
    return steering;
 }
@@ -140,7 +142,7 @@ glm::vec2 Flock::separation(const Boid& boid) const
 
    avgVelocity = util::setMag(avgVelocity, config::MAX_SPEED);
 
-   glm::vec2 steering = util::getSteeringVector(avgVelocity, boid._velocity);
+   glm::vec2 steering = util::getSteeringVector(avgVelocity, boid.m_velocity);
 
    return steering;
 }
@@ -150,18 +152,18 @@ glm::vec2 Flock::getAverageVector(const Boid& boid, const int type) const
    glm::vec2 avg = glm::vec2(0.0);
    int nNeighbords = 0;
 
-   for (const auto& other : _boids)
+   for (const auto& other : m_boids)
    {
-      if (boid._id == other._id)
+      if (boid.m_id == other.m_id)
          continue;
       
-      float range = std::abs(util::getAngle(boid._velocity, other._velocity));
-      float d = glm::length(boid._center - other._center);
+      float range = std::abs(util::getAngle(boid.m_velocity, other.m_velocity));
+      float d = glm::length(boid.m_center - other.m_center);
 
       if (type == ALIGNMENT)
       {
          if (d < config::ALIGNMENT_DIST && range < config::ALIGNMENT_RANGE) {
-            avg += other._velocity;
+            avg += other.m_velocity;
             nNeighbords++;
          }
 
@@ -171,7 +173,7 @@ glm::vec2 Flock::getAverageVector(const Boid& boid, const int type) const
       {
          if (d < config::COHESION_DIST && range < config::COHESION_RANGE)
          {
-            avg += other._center;
+            avg += other.m_center;
             nNeighbords++;
          }
       }
@@ -181,7 +183,7 @@ glm::vec2 Flock::getAverageVector(const Boid& boid, const int type) const
       {
          if (d < config::SEPARATION_DIST && range < config::SEPARATION_RANGE)
          {
-            glm::vec2 oppositeDir = boid._center - other._center;
+            glm::vec2 oppositeDir = boid.m_center - other.m_center;
             oppositeDir /= d;
 
             avg += oppositeDir;

@@ -8,25 +8,25 @@ Simulation::Simulation()
    try 
    {
       // Init Window
-      _window = WindowManager::getInstance(
+      m_window = WindowManager::getInstance(
             config::RESOLUTION_W,
             config::RESOLUTION_H,
             config::WINDOW_TITLE
       );
 
       // Init Renderer
-      _renderer = Renderer::getInstance(_window->getWindow());
+      m_renderer = Renderer::getInstance(m_window->getWindow());
 
       initGLAD();
 
-      _glContext = SDL_GL_CreateContext(_window->getWindow());
+      m_glContext = SDL_GL_CreateContext(m_window->getWindow());
 
       initImGui();
 
    } catch (const std::exception& e)
    {
       std::cout << e.what() << std::endl;
-      _appRunning = false;
+      m_appRunning = false;
 
       return;
    }
@@ -37,8 +37,8 @@ Simulation::Simulation()
    initShaders();
    initBuffers();
    
-   _appRunning = true;
-   _FPS = 0;
+   m_appRunning = true;
+   m_FPS = 0;
 }
 
 Simulation::~Simulation()
@@ -47,30 +47,30 @@ Simulation::~Simulation()
    ImGui_ImplSDL2_Shutdown();
    ImGui::DestroyContext();
 
-   SDL_GL_DeleteContext(_glContext);
-   _renderer->destroyRenderer();
-   _window->destroyWindow();
+   SDL_GL_DeleteContext(m_glContext);
+   m_renderer->destroyRenderer();
+   m_window->destroyWindow();
 }
 
 // Creates n species of boids.
 void Simulation::createFlocks()
 {
-   _flocks.reserve(config::MAX_N_SPECIES);
+   m_flocks.reserve(config::MAX_N_SPECIES);
   
    for (int i = 0; i < config::MAX_N_SPECIES; i++)
-      _flocks.push_back(Flock());
+      m_flocks.push_back(Flock());
 }
 
 void Simulation::createObstacles()
 {
-   _obstacles.reserve(config::MAX_N_OBSTACLES);
+   m_obstacles.reserve(config::MAX_N_OBSTACLES);
 
    for (int i = 0; i < config::MAX_N_OBSTACLES; i++)
    {
-      _obstacles.push_back(Obstacle(i));
+      m_obstacles.push_back(Obstacle(i));
       
-      while (_obstacles[i].doesCollide(_obstacles) == true)
-         _obstacles[i] = Obstacle(i);
+      while (m_obstacles[i].doesCollide(m_obstacles) == true)
+         m_obstacles[i] = Obstacle(i);
 
    }
 }
@@ -85,7 +85,7 @@ void Simulation::calculateFPS()
 
    if (currentTime - lastTime > 1.0f)
    {
-      _FPS = fps;
+      m_FPS = fps;
       lastTime = currentTime;
       fps = 0;
    }
@@ -93,7 +93,7 @@ void Simulation::calculateFPS()
 
 void Simulation::run()
 {
-   while (_appRunning) {
+   while (m_appRunning) {
 
       update();
       render();
@@ -116,8 +116,8 @@ void Simulation::update()
 
 void Simulation::updateFlocks()
 {
-   for (auto& flock : _flocks)
-      flock.toFlock(_obstacles);
+   for (auto& flock : m_flocks)
+      flock.toFlock(m_obstacles);
 }
 
 void Simulation::render()
@@ -128,8 +128,8 @@ void Simulation::render()
 
    
    // Renders the triangles
-   glUseProgram(_shaderProgram);
-   glBindVertexArray(_VAO);
+   glUseProgram(m_shaderProgram);
+   glBindVertexArray(m_VAO);
    glDrawArrays(
          GL_TRIANGLES,
          0,
@@ -139,14 +139,14 @@ void Simulation::render()
          )
    );
    
-   glBindVertexArray(_VAO);
+   glBindVertexArray(m_VAO);
 
    // Renders imgui
    // (we've to render it after glDraw to appear on top of the _window)
    ImGui::Render();
    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-   _window->swapBuffers();
+   m_window->swapBuffers();
 }
 
 void Simulation::checkUserInput()
@@ -160,10 +160,10 @@ void Simulation::checkUserInput()
       if (event.type == SDL_QUIT ||
          (event.type == SDL_WINDOWEVENT &&
             event.window.event == SDL_WINDOWEVENT_CLOSE &&
-             event.window.windowID == SDL_GetWindowID(_window->getWindow())
+             event.window.windowID == SDL_GetWindowID(m_window->getWindow())
          )
       ){
-         _appRunning = false;
+         m_appRunning = false;
          break;
       }
    }
@@ -191,10 +191,10 @@ void Simulation::updateBoidChunk()
          ) * sizeof(float);
 
          updateChunkOfBuffer(
-               _bufferVertex, 
+               m_bufferVertex, 
                vertexOffset,
                6,
-               _flocks[i].getBoidPosition(j)
+               m_flocks[i].getBoidPosition(j)
          );
       }
    }
@@ -206,7 +206,7 @@ void Simulation::updateChunkOfBuffer(
       const unsigned int sizeData,
       void* data
 ){ 
-   glBindVertexArray(_VAO);
+   glBindVertexArray(m_VAO);
    glBindBuffer(GL_ARRAY_BUFFER, buffer);
    
    glBufferSubData(
@@ -222,7 +222,7 @@ void Simulation::initShaders()
 {
    try
    {
-      _shaderProgram =
+      m_shaderProgram =
          glShaderLoader::loadShader(
             "../shaders/boids.vert", 
             "../shaders/boids.frag"
@@ -230,13 +230,13 @@ void Simulation::initShaders()
    } catch(const std::exception& e)
    {
       std::cerr << e.what() << std::endl;
-      _appRunning = false;
+      m_appRunning = false;
    }
 }
 
 void Simulation::initBuffers()
 {
-   glGenVertexArrays(1, &_VAO);
+   glGenVertexArrays(1, &m_VAO);
    
    createVertexBuffer();
    createColorBuffer();
@@ -338,9 +338,9 @@ void Simulation::createVertexBuffer()
    ) * sizeof(float);
 
    // Create a big empty buffer for all the boids and the obstacles.
-   createBuffer(bufferSize, _bufferVertex, GL_ARRAY_BUFFER, GL_DYNAMIC_DRAW);
-   bindBufferToVAO(_VAO, 0, _bufferVertex, 0, sizeof(float) * 2);
-   bindVertexAttribute(_VAO, 0, 0, 2, GL_FLOAT, GL_FALSE, 0);
+   createBuffer(bufferSize, m_bufferVertex, GL_ARRAY_BUFFER, GL_DYNAMIC_DRAW);
+   bindBufferToVAO(m_VAO, 0, m_bufferVertex, 0, sizeof(float) * 2);
+   bindVertexAttribute(m_VAO, 0, 0, 2, GL_FLOAT, GL_FALSE, 0);
 }
 
 // Creates the buffer that will contains all the colors for all the boids
@@ -352,9 +352,9 @@ void Simulation::createColorBuffer()
          (9 * config::N_TRIANG_PER_CIRCLE * config::MAX_N_OBSTACLES)
    ) * sizeof(float);
 
-   createBuffer(bufferSize, _bufferColor, GL_ARRAY_BUFFER, GL_STATIC_DRAW);
-   bindBufferToVAO(_VAO, 1, _bufferColor, 0, sizeof(float) * 3);
-   bindVertexAttribute(_VAO, 1, 1, 3, GL_FLOAT, GL_FLOAT, 0);
+   createBuffer(bufferSize, m_bufferColor, GL_ARRAY_BUFFER, GL_STATIC_DRAW);
+   bindBufferToVAO(m_VAO, 1, m_bufferColor, 0, sizeof(float) * 3);
+   bindVertexAttribute(m_VAO, 1, 1, 3, GL_FLOAT, GL_FLOAT, 0);
 }
 
 // Fills the chunk that belongs to the boid's color.
@@ -370,10 +370,10 @@ void Simulation::fillColorBoidBuffer()
          ) * sizeof(float);
 
          updateChunkOfBuffer(
-               _bufferColor,
+               m_bufferColor,
                vertexOffset,
                9,
-               _flocks[i].getColor()
+               m_flocks[i].getColor()
          );
       }
    }
@@ -401,10 +401,10 @@ void Simulation::fillObstacleChunk()
          ) * sizeof(float) + startIndexVertex;
 
          updateChunkOfBuffer(
-               _bufferVertex,
+               m_bufferVertex,
                vertexOffset,
                6,
-               _obstacles[i].getPos(j)
+               m_obstacles[i].getPos(j)
          );
 
          // Fills the color buffer
@@ -415,10 +415,10 @@ void Simulation::fillObstacleChunk()
          ) * sizeof(float) + startIndexColor;
          
          updateChunkOfBuffer(
-               _bufferColor,
+               m_bufferColor,
                colorOffset,
                9,
-               _obstacles[i].getColor()
+               m_obstacles[i].getColor()
          );
 
       }
@@ -435,7 +435,7 @@ void Simulation::initImGui()
 
    ImGui::StyleColorsDark();
    
-   ImGui_ImplSDL2_InitForOpenGL(_window->getWindow(), _glContext);
+   ImGui_ImplSDL2_InitForOpenGL(m_window->getWindow(), m_glContext);
    ImGui_ImplOpenGL3_Init();
 }
 
@@ -443,12 +443,12 @@ void Simulation::updateGUI()
 {
    // Starts the Dear ImGui frame
    ImGui_ImplOpenGL3_NewFrame();
-   ImGui_ImplSDL2_NewFrame(_window->getWindow());
+   ImGui_ImplSDL2_NewFrame(m_window->getWindow());
    ImGui::NewFrame();
 
    // Draws the GUI
    ImGui::Begin("Settings");
-   ImGui::Text("FPS: %s", std::to_string(_FPS).c_str());
+   ImGui::Text("FPS: %s", std::to_string(m_FPS).c_str());
    ImGui::Text(
          "Number of species: %s", std::to_string(config::MAX_N_SPECIES).c_str()
    );

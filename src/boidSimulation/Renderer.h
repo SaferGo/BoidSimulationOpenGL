@@ -13,8 +13,8 @@ public:
 
 private:
 
-   static Renderer* instance;
-   SDL_Renderer* renderer;
+   static Renderer* m_instance;
+   SDL_Renderer* m_renderer;
 
    // ========================== Methods ==========================
    //

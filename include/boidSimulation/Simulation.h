@@ -29,19 +29,19 @@ public:
 
 private:
 
-   std::vector<Flock> _flocks;
-   std::vector<Obstacle> _obstacles;
+   std::vector<Flock> m_flocks;
+   std::vector<Obstacle> m_obstacles;
 
-   bool _appRunning;
-   unsigned int _FPS;
+   bool m_appRunning;
+   unsigned int m_FPS;
    
-   WindowManager* _window;
-   Renderer*      _renderer;
-   SDL_GLContext  _glContext;
-   unsigned int   _shaderProgram;
+   WindowManager* m_window;
+   Renderer*      m_renderer;
+   SDL_GLContext  m_glContext;
+   unsigned int   m_shaderProgram;
 
-   unsigned int _bufferVertex, _bufferColor;
-   unsigned int _VAO;
+   unsigned int m_bufferVertex, m_bufferColor;
+   unsigned int m_VAO;
 
    // ========================== Methods ==========================
 

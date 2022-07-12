@@ -20,8 +20,8 @@ public:
 
 private:
 
-   std::vector<Boid> _boids;
-   glm::vec3 _color[3];
+   std::vector<Boid> m_boids;
+   glm::vec3 m_color[3];
 
    glm::vec2 alignment(const Boid& boid) const;
    glm::vec2 cohesion(const Boid& boid) const;

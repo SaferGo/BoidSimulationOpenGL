@@ -18,8 +18,8 @@ public:
 
 private:
 
-   static WindowManager* instance;
-   SDL_Window* window;
+   static WindowManager* m_instance;
+   SDL_Window* m_window;
 
    // ========================== Methods ==========================
 

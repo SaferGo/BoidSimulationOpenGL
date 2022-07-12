@@ -3,26 +3,28 @@
 #include <boidSimulation/util.h>
 #include <boidSimulation/config.h>
 
-Boid::Boid(const int newID) : _id(newID)
+Boid::Boid(const int newID) : m_id(newID)
 {
-   std::uniform_real_distribution<> rand(-1.0, 1.0);
+   std::uniform_real_distribution<> rand(0, 1.0);
    
-   _center = glm::vec2(rand(config::gen), rand(config::gen));
-   _velocity = util::generateRandVelocity();
+   m_center = glm::vec2(
+         (rand(config::gen) * 2.0) - 1.0,
+         (rand(config::gen) * 2.0) - 1.0);
+   m_velocity = util::generateRandVelocity();
 
    rotate();
 }
 
 void Boid::rotate()
 {
-   glm::vec2 direction = glm::normalize(_velocity);
+   glm::vec2 direction = glm::normalize(m_velocity);
 
    // Top vertex
-   _pos[0] = _center + direction * config::B_HEIGHT;
+   m_pos[0] = m_center + direction * config::B_HEIGHT;
    // Left tail vertex
-   _pos[1] = _center + glm::vec2(-direction.y, direction.x) * config::B_WIDTH;
+   m_pos[1] = m_center + glm::vec2(-direction.y, direction.x) * config::B_WIDTH;
    // Right tail vertex
-   _pos[2] = _center + glm::vec2(direction.y, -direction.x) * config::B_WIDTH;
+   m_pos[2] = m_center + glm::vec2(direction.y, -direction.x) * config::B_WIDTH;
 }
 
 
@@ -38,11 +40,11 @@ bool Boid::isOutOfScreen() const
 {
    for (int i = 0; i < 3; i++)
    {
-      if (!isOutOfBorder(_pos[i]))
+      if (!isOutOfBorder(m_pos[i]))
          return false;
    }
 
-   if (!isOutOfBorder(_center))
+   if (!isOutOfBorder(m_center))
       return false;
 
    return true;
@@ -52,30 +54,30 @@ void Boid::keepInsideBorders()
 {
    if (isOutOfScreen())
    {
-      if (_center.x >  1.0)
+      if (m_center.x >  1.0)
       {
-         _center.x -= (2.0 + config::B_HEIGHT);
+         m_center.x -= (2.0 + config::B_HEIGHT);
          for (int i = 0; i < 3; i++)
-            _pos[i].x -= (2.0 + config::B_HEIGHT);
+            m_pos[i].x -= (2.0 + config::B_HEIGHT);
       }
-      else if (_center.x < -1.0)
+      else if (m_center.x < -1.0)
       {
-         _center.x += (2.0 + config::B_HEIGHT);
+         m_center.x += (2.0 + config::B_HEIGHT);
          for (int i = 0; i < 3; i++) 
-            _pos[i].x += (2.0 + config::B_HEIGHT);
+            m_pos[i].x += (2.0 + config::B_HEIGHT);
       }
 
-      if (_center.y >  1.0)
+      if (m_center.y >  1.0)
       {
-         _center.y -= (2.0 + config::B_HEIGHT);
+         m_center.y -= (2.0 + config::B_HEIGHT);
          for (int i = 0; i < 3; i++) 
-            _pos[i].y -= (2.0 + config::B_HEIGHT);
+            m_pos[i].y -= (2.0 + config::B_HEIGHT);
       }
-      else if (_center.y < -1.0)
+      else if (m_center.y < -1.0)
       {
-         _center.y += (2.0 + config::B_HEIGHT);
+         m_center.y += (2.0 + config::B_HEIGHT);
          for (int i = 0; i < 3; i++)
-            _pos[i].y += (2.0 + config::B_HEIGHT);
+            m_pos[i].y += (2.0 + config::B_HEIGHT);
       }
    }
 }
@@ -83,9 +85,9 @@ void Boid::keepInsideBorders()
 // Move all the vertices forward(with the velocity vector)
 void Boid::moveFoward()
 {
-   _center += _velocity;
+   m_center += m_velocity;
    for (int i = 0; i < 3; i++)
-      _pos[i] += _velocity;
+      m_pos[i] += m_velocity;
 }
 
 Boid::~Boid() = default;
