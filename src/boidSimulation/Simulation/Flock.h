@@ -4,8 +4,8 @@
 
 #include <glm/glm.hpp>
 
-#include <boidSimulation/Boid.h>
-#include <boidSimulation/Obstacle.h>
+#include <boidSimulation/Simulation/Boid.h>
+#include <boidSimulation/Simulation/Obstacle.h>
 
 class Flock
 {

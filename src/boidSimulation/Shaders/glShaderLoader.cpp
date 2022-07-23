@@ -1,4 +1,4 @@
-#include <boidSimulation/glShaderLoader.h>
+#include <boidSimulation/Shaders/glShaderLoader.h>
 
 #include <iostream>
 #include <string>

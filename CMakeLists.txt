@@ -11,20 +11,22 @@ set(PROJECT_SOURCE_DIR "${CMAKE_SOURCE_DIR}/src")
 set(PROJECT_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/include")
 set(PROJECT_LIBRARIES_DIR "${CMAKE_SOURCE_DIR}/libs")
 
-# SDL2
+# Libs
+
+# -SDL2
 find_package(SDL2 REQUIRED)
 include_directories(${SDL2_INCLUDE_DIRS})
 
-# GLAD(OpenGL)
+# -GLAD(OpenGL)
 set(GLAD_DIR "${PROJECT_LIBRARIES_DIR}/glad")
 add_library(glad "${GLAD_DIR}/src/glad.c")
 include_directories("${GLAD_DIR}/include")
 
-# GLM
+# -GLM
 set(GLM_DIR "${PROJECT_LIBRARIES_DIR}/glm")
 add_subdirectory(${GLM_DIR} EXCLUDE_FROM_ALL)
 
-# ImGui
+# -ImGui
 # Compile imGUI as an static library.
 set(IMGUI_DIR "${PROJECT_LIBRARIES_DIR}/imgui")
 file(GLOB IMGUI_SOURCES
@@ -44,14 +46,14 @@ target_include_directories(
 # Executable
 add_executable(${PROJECT_NAME} 
    "${PROJECT_SOURCE_DIR}/boidSimulation/main.cpp"
-   "${PROJECT_SOURCE_DIR}/boidSimulation/glShaderLoader.cpp"
-   "${PROJECT_SOURCE_DIR}/boidSimulation/Renderer.cpp"
-   "${PROJECT_SOURCE_DIR}/boidSimulation/WindowManager.cpp"
-   "${PROJECT_SOURCE_DIR}/boidSimulation/util.cpp"
-   "${PROJECT_SOURCE_DIR}/boidSimulation/Boid.cpp"
-   "${PROJECT_SOURCE_DIR}/boidSimulation/Flock.cpp"
-   "${PROJECT_SOURCE_DIR}/boidSimulation/Simulation.cpp"
-   "${PROJECT_SOURCE_DIR}/boidSimulation/Obstacle.cpp"
+   "${PROJECT_SOURCE_DIR}/boidSimulation/Shaders/glShaderLoader.cpp"
+   "${PROJECT_SOURCE_DIR}/boidSimulation/Renderer/Renderer.cpp"
+   "${PROJECT_SOURCE_DIR}/boidSimulation/Window/WindowManager.cpp"
+   "${PROJECT_SOURCE_DIR}/boidSimulation/Math/util.cpp"
+   "${PROJECT_SOURCE_DIR}/boidSimulation/Simulation/Boid.cpp"
+   "${PROJECT_SOURCE_DIR}/boidSimulation/Simulation/Flock.cpp"
+   "${PROJECT_SOURCE_DIR}/boidSimulation/Simulation/Simulation.cpp"
+   "${PROJECT_SOURCE_DIR}/boidSimulation/Simulation/Obstacle.cpp"
 )
 
 target_include_directories(

@@ -17,7 +17,6 @@ private:
    SDL_Renderer* m_renderer;
 
    // ========================== Methods ==========================
-   //
    Renderer(SDL_Window* window);
    Renderer(const Renderer& other) = delete;
    Renderer& operator=(const Renderer& other) = delete;

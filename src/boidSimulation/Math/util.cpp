@@ -1,6 +1,6 @@
-#include <boidSimulation/util.h>
+#include <boidSimulation/Math/util.h>
 
-#include <boidSimulation/config.h>
+#include <boidSimulation/Settings/config.h>
 
 glm::vec2 util::generateRandVelocity()
 {

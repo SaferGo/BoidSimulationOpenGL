@@ -1,6 +1,6 @@
-#include <boidSimulation/Obstacle.h>
+#include <boidSimulation/Simulation/Obstacle.h>
 
-#include <boidSimulation/config.h>
+#include <boidSimulation/Settings/config.h>
 
 Obstacle::Obstacle(const unsigned id) : m_id(id)
 {

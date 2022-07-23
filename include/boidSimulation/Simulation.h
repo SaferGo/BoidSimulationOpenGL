@@ -10,12 +10,12 @@
 #include <SDL2/SDL.h>
 #include <glad/glad.h>
 
-#include <boidSimulation/WindowManager.h>
-#include <boidSimulation/Renderer.h>
-#include <boidSimulation/glShaderLoader.h>
-#include <boidSimulation/config.h>
-#include <boidSimulation/Flock.h>
-#include <boidSimulation/Obstacle.h>
+#include <boidSimulation/Window/WindowManager.h>
+#include <boidSimulation/Renderer/Renderer.h>
+#include <boidSimulation/Shaders/glShaderLoader.h>
+#include <boidSimulation/Settings/config.h>
+#include <boidSimulation/Simulation/Flock.h>
+#include <boidSimulation/Simulation/Obstacle.h>
 
 class Simulation
 {

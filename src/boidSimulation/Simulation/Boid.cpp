@@ -1,7 +1,7 @@
-#include <boidSimulation/Boid.h>
+#include <boidSimulation/Simulation/Boid.h>
 
-#include <boidSimulation/util.h>
-#include <boidSimulation/config.h>
+#include <boidSimulation/Math/util.h>
+#include <boidSimulation/Settings/config.h>
 
 Boid::Boid(const int newID) : m_id(newID)
 {

@@ -1,4 +1,4 @@
-#include <boidSimulation/WindowManager.h>
+#include <boidSimulation/Window/WindowManager.h>
 
 #include <iostream>
 #include <exception>

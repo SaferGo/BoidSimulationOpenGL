@@ -1,7 +1,7 @@
-#include <boidSimulation/Flock.h>
+#include <boidSimulation/Simulation/Flock.h>
 
-#include <boidSimulation/config.h>
-#include <boidSimulation/util.h>
+#include <boidSimulation/Settings/config.h>
+#include <boidSimulation/Math/util.h>
 
 #define ALIGNMENT  0
 #define COHESION   1

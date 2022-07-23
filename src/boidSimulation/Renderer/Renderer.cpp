@@ -1,4 +1,4 @@
-#include <boidSimulation/Renderer.h>
+#include <boidSimulation/Renderer/Renderer.h>
 
 #include <iostream>
 

@@ -4,8 +4,8 @@
 
 #include <glm/glm.hpp>
 
-#include <boidSimulation/Boid.h>
-#include <boidSimulation/config.h>
+#include <boidSimulation/Simulation/Boid.h>
+#include <boidSimulation/Settings/config.h>
 
 class Obstacle
 {
