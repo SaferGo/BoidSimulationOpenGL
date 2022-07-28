@@ -11,13 +11,13 @@ namespace config
    inline constexpr float B_WIDTH  = 0.01;
    inline constexpr float B_HEIGHT = 0.03;
 
-   inline constexpr int   MAX_N_SPECIES     = 10;
-   inline constexpr int   MAX_N_BOIDS       = 63;
-   inline constexpr int   MAX_N_OBSTACLES   = 30;
-   inline constexpr int N_TRIANG_PER_CIRCLE = 30;
-   inline constexpr float MAX_SPEED         = 0.0095;
-   inline constexpr float MIN_SPEED         = 0.0045;
-   inline constexpr float MAX_MAG           = 0.055;
+   inline constexpr int   MAX_N_SPECIES       = 10;
+   inline constexpr int   MAX_N_BOIDS         = 63;
+   inline constexpr int   MAX_N_OBSTACLES     = 30;
+   inline constexpr int   N_TRIANG_PER_CIRCLE = 30;
+   inline constexpr float MAX_SPEED           = 0.0095;
+   inline constexpr float MIN_SPEED           = 0.0045;
+   inline constexpr float MAX_MAG             = 0.055;
    
    inline constexpr float ALIGNMENT_DIST   = 0.19;
    inline constexpr float ALIGNMENT_RANGE  = 1.57;
