@@ -1,5 +1,0 @@
-# No hagas un movimiento con un algoritmo, no es necesario, ya que
-el alignment junto a los otros pasos, van a crear un nuevo
-vector direccion que los va a rotar. Si haces un algoritmo, como hice yo
-varias veces, despues para aplicar las otros pasos es un dolor de huevos.
-Igual tranquilo que el movimiento se sigue viendo realista.
